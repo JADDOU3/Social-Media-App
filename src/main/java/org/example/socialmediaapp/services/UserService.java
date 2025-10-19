@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.regex.Pattern;
 
 @Service
 @Transactional(rollbackOn =  Exception.class)
@@ -23,6 +24,10 @@ import java.util.Date;
 public class UserService implements UserDetailsService {
     private final UserRepo userRepo;
     private final PasswordEncoder passwordEncoder;
+
+
+    private static final String PASSWORD_REGEX = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*])(.{8,})$";
+    private static final Pattern PASSWORD_PATTERN = Pattern.compile(PASSWORD_REGEX);
 
 
     @Override
@@ -36,6 +41,12 @@ public class UserService implements UserDetailsService {
             throw new IllegalArgumentException("Email already exists");
         }
 
+        if (!isPasswordStrong(registerRequest.getPassword())) {
+            throw new IllegalArgumentException(
+                    "Password must be at least 8 characters long and contain: " +
+                            "at least one uppercase letter, one lowercase letter, one digit, and one special character (!@#$%^&*)"
+            );
+        }
 
         String hashedPassword = passwordEncoder.encode(registerRequest.getPassword());
 
@@ -56,6 +67,13 @@ public class UserService implements UserDetailsService {
 
     public boolean existsByEmail(String email) {
         return userRepo.existsByEmail(email);
+    }
+
+    private boolean isPasswordStrong(String password) {
+        if (password == null || password.isEmpty()) {
+            return false;
+        }
+        return PASSWORD_PATTERN.matcher(password).matches();
     }
 
 }
