@@ -7,15 +7,19 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class User {
+public class User implements UserDetails {
     @Id
     @GeneratedValue
     private int id;
@@ -28,10 +32,43 @@ public class User {
     private String gender;
     private String phoneNumber;
     private String socialSituation;
+    private Date dateOfBirth;
 
     private String bio;
     private String profilePicture;
 
     private Date createdDate;
 
+    public User(
+            String email,
+            String password,
+            String name,
+            String job,
+            String location,
+            String gender,
+            String phoneNumber,
+            Date dateOfBirth,
+            String socialSituation
+    ) {
+        this.email = email;
+        this.password = password;
+        this.name = name;
+        this.job = job;
+        this.location = location;
+        this.gender = gender;
+        this.phoneNumber = phoneNumber;
+        this.dateOfBirth = dateOfBirth;
+        this.socialSituation = socialSituation;
+        this.createdDate = new Date();
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
+
+    @Override
+    public String getUsername() {
+        return this.email;
+    }
 }
