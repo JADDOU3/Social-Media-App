@@ -18,12 +18,12 @@ public class ProfilePictureService {
     @Autowired
     private UserRepo userRepo;
 
-    public ProfilePicture SaveProfilePicture(String email, MultipartFile profilePicture) throws IOException {
+    public ProfilePicture saveProfilePicture(String email, MultipartFile profilePicture) throws IOException {
         User user=userRepo.findByEmail(email).orElseThrow(()->new RuntimeException("User not found"));
 
         byte[] imageBytes = profilePicture.getBytes();
 
-        Optional<ProfilePicture> exist=profilePictureRepo.findByEmail(email);
+        Optional<ProfilePicture> exist=profilePictureRepo.findByUserEmail(email);
         exist.ifPresent(profilePictureRepo::delete);
 
         ProfilePicture picture = ProfilePicture.builder()
@@ -37,12 +37,12 @@ public class ProfilePictureService {
         return profilePictureRepo.save(picture);
     }
 
-    public Optional<ProfilePicture> GetProfilePicture(String email) throws IOException {
-        Optional<ProfilePicture> profilePicture=profilePictureRepo.findByEmail(email);
+    public Optional<ProfilePicture> getProfilePicture(String email) throws IOException {
+        Optional<ProfilePicture> profilePicture=profilePictureRepo.findByUserEmail(email);
         return profilePicture;
     }
 
     public void deleteProfilePicture(String email) throws IOException {
-        profilePictureRepo.findByEmail(email).ifPresent(profilePictureRepo::delete);
+        profilePictureRepo.findByUserEmail(email).ifPresent(profilePictureRepo::delete);
     }
 }

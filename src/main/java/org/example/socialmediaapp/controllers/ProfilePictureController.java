@@ -17,13 +17,13 @@ public class ProfilePictureController {
 
     @PostMapping("/{email}")
     public ResponseEntity<ProfilePicture> uploadProfilePicture(@PathVariable String email,@RequestParam("file") MultipartFile file) throws IOException {
-    ProfilePicture picture=profilePictureService.SaveProfilePicture(email,file);
+    ProfilePicture picture=profilePictureService.saveProfilePicture(email,file);
     return ResponseEntity.ok().body(picture);
     }
 
     @GetMapping("/{email}")
     public ResponseEntity<byte[]> getProfilePicture(@PathVariable String email) throws IOException {
-        return profilePictureService.GetProfilePicture(email)
+        return profilePictureService.getProfilePicture(email)
                 .map(picture -> ResponseEntity.ok()
                         .contentType(MediaType.valueOf(picture.getPictureType()))
                         .body(picture.getImageData()))
