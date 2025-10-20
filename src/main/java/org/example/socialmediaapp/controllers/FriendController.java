@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.example.socialmediaapp.dto.FriendRequest;
 import org.example.socialmediaapp.dto.FriendResponse;
 import org.example.socialmediaapp.entities.User;
-import org.example.socialmediaapp.repositories.UserRepo;
 import org.example.socialmediaapp.services.FriendService;
 import org.example.socialmediaapp.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +17,7 @@ import java.util.List;
 @RequestMapping("/api/friends")
 @RequiredArgsConstructor
 public class FriendController {
+    @Autowired
     private final FriendService friendService;
 
       @PostMapping("/send")
@@ -38,10 +38,10 @@ public class FriendController {
           friendService.declineFriendRequest(id);
           return ResponseEntity.ok("Friend request declined.");
       }
-    @GetMapping("/friends")
-    public ResponseEntity<List<FriendResponse>> getAllFriends(){
-        User user = SecurityUtils.getCurrentUser();
-        List<FriendResponse> friends = friendService.getAllFriends(user.getId());
-        return ResponseEntity.ok(friends);
-    }
+     @GetMapping("/")
+        public ResponseEntity<List<FriendResponse>> getAllFriends(){
+            User user = SecurityUtils.getCurrentUser();
+            List<FriendResponse> friends = friendService.getAllFriends(user.getId());
+            return ResponseEntity.ok(friends);
+        }
 }
