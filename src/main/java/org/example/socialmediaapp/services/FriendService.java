@@ -95,10 +95,43 @@ public class FriendService {
         List<Friend> friendsAsUser2 = friendRepo.findByUser2AndRequestStatus(user, RequestStatus.APPROVED);
         List<Friend> allFriends = new ArrayList<>(friendsAsUser1);
         allFriends.addAll(friendsAsUser2);
+        allFriends.removeIf(friend -> friend.isBlocked());
         return allFriends.stream()
                 .map(this::convertToResponse)
                 .toList();
     }
+
+    public List<FriendResponse> getBlockedUsers(){
+        User user =  SecurityUtils.getCurrentUser();
+        List<Friend> blockedAsUser1 = friendRepo.findByUser1AndIsBlockedTrue(user);
+        List<Friend> blockedAsUser2 = friendRepo.findByUser2AndIsBlockedTrue(user);
+
+        List<Friend> allBlockedUsers = new ArrayList<>(blockedAsUser1);
+        allBlockedUsers.addAll(blockedAsUser2);
+
+        return allBlockedUsers.stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
+    public FriendResponse blockUser(int id){
+        User user = SecurityUtils.getCurrentUser();
+        Optional<Friend> friend = friendRepo.findById(id);
+        if(friend.isPresent()){
+            if(friend.get().getUser1().getId() == user.getId() || friend.get().getUser2().getId() == user.getId() ) {
+                friend.get().setBlocked(true);
+                Friend blockedFriend = friendRepo.save(friend.get());
+                return convertToResponse(blockedFriend);
+            }
+            else{
+                throw new  RuntimeException("User with id" + user.getId() + " is not part of that request");
+            }
+        }
+        else{
+            throw new RuntimeException("Friend request not found or already declined");
+        }
+    }
+
 
     private FriendResponse convertToResponse(Friend friend) {
         FriendResponse response = new FriendResponse();
@@ -109,4 +142,6 @@ public class FriendService {
         response.setRequestStatus(friend.getRequestStatus());
         return response;
     }
+
+
 }

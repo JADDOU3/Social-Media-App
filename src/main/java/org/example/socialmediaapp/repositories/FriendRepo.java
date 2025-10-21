@@ -18,5 +18,6 @@ public interface FriendRepo extends JpaRepository<Friend, Integer> {
 
     List<Friend> findByUser1AndUser2AndRequestStatus(User user1, User user2, RequestStatus requestStatus);
 
-    List<Friend> findByIsBlockedTrue();
+    List<Friend> findByUser1AndIsBlockedTrue(User user1);
+    List<Friend> findByUser2AndIsBlockedTrue(User user2);
 }
