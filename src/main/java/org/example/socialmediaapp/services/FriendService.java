@@ -167,7 +167,7 @@ public class FriendService {
 
             return theFriend.getName() == null || !theFriend.getName().toLowerCase().contains(name.toLowerCase());
         });
-        
+
         List<User> users = extractUsers(allFriends);
         users.removeIf(user1 -> user1.getId() == user.getId());
         return users;
@@ -195,4 +195,55 @@ public class FriendService {
     }
 
 
+    public void cancelFriendRequest(int id) {
+        User user = SecurityUtils.getCurrentUser();
+        Optional<Friend> friendRequest = friendRepo.findById(id);
+        if(friendRequest.isPresent() && friendRequest.get().getRequestStatus().equals(RequestStatus.REQUESTED)){
+            if(friendRequest.get().getUser1().getId() == user.getId() ) { // only user 1 ( sender )
+                friendRequest.get().setRequestStatus(RequestStatus.CANCELLED);
+                friendRepo.save(friendRequest.get());
+            }
+            else{
+                throw new  RuntimeException("User with id" + user.getId() + " is not part of that request");
+            }
+        }
+        else{
+            throw new RuntimeException("Friend request not found or already declined");
+        }
+    }
+
+    public FriendResponse unblockUser(int id) {
+        User user = SecurityUtils.getCurrentUser();
+        Optional<Friend> friend = friendRepo.findById(id);
+        if(friend.isPresent()){
+            if(friend.get().getUser1().getId() == user.getId() || friend.get().getUser2().getId() == user.getId() ) {
+                friend.get().setBlocked(false);
+                Friend unblockedFriend = friendRepo.save(friend.get());
+                return convertToResponse(unblockedFriend);
+            }
+            else{
+                throw new  RuntimeException("User with id" + user.getId() + " is not part of that request");
+            }
+        }
+        else{
+            throw new RuntimeException("Friend request not found or already declined");
+        }
+    }
+
+    public void removeFriend(int id) {
+        User user = SecurityUtils.getCurrentUser();
+        Optional<Friend> friendRequest = friendRepo.findById(id);
+        if(friendRequest.isPresent() && friendRequest.get().getRequestStatus().equals(RequestStatus.APPROVED)){
+            if(friendRequest.get().getUser1().getId() == user.getId() ) { // only user 1 ( sender )
+                friendRequest.get().setRequestStatus(RequestStatus.REMOVED);
+                friendRepo.save(friendRequest.get());
+            }
+            else{
+                throw new  RuntimeException("User with id" + user.getId() + " is not part of that request");
+            }
+        }
+        else{
+            throw new RuntimeException("Friend request not found or already declined");
+        }
+    }
 }
