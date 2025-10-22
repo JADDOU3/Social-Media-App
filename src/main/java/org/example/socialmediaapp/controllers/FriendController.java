@@ -38,6 +38,27 @@ public class FriendController {
           friendService.declineFriendRequest(id);
           return ResponseEntity.ok("Friend request declined.");
       }
+
+      @GetMapping("/{name}")
+      public ResponseEntity<List<User>> findUsersByName(@PathVariable String name){
+          List<User> users = friendService.findUsersByName(name);
+          return ResponseEntity.ok(users);
+      }
+
+      @GetMapping("/received-requests")
+      public ResponseEntity<List<FriendResponse>> getReceivedFriendRequests(){
+          User user = SecurityUtils.getCurrentUser();
+          List<FriendResponse> friendRequests = friendService.getReceiverFriendRequests();
+          return ResponseEntity.ok(friendRequests);
+      }
+
+    @GetMapping("/sent-requests")
+    public ResponseEntity<List<FriendResponse>> getSentFriendRequests(){
+        User user = SecurityUtils.getCurrentUser();
+        List<FriendResponse> friendRequests = friendService.getSentFriendRequests();
+        return ResponseEntity.ok(friendRequests);
+    }
+
      @GetMapping("/")
         public ResponseEntity<List<FriendResponse>> getAllFriends(){
             User user = SecurityUtils.getCurrentUser();

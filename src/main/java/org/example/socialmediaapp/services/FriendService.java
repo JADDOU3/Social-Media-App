@@ -58,7 +58,7 @@ public class FriendService {
         User user = SecurityUtils.getCurrentUser();
         Optional<Friend> friendRequest = friendRepo.findById(id);
         if(friendRequest.isPresent() && friendRequest.get().getRequestStatus().equals(RequestStatus.REQUESTED)){
-            if(friendRequest.get().getUser1().getId() == user.getId() || friendRequest.get().getUser2().getId() == user.getId() ) {
+            if(friendRequest.get().getUser2().getId() == user.getId() ) {// only user 2 ( reveiver )
                 friendRequest.get().setRequestStatus(RequestStatus.APPROVED);
                 friendRepo.save(friendRequest.get());
             }
@@ -76,7 +76,7 @@ public class FriendService {
         User user = SecurityUtils.getCurrentUser();
         Optional<Friend> friendRequest = friendRepo.findById(id);
         if(friendRequest.isPresent() && friendRequest.get().getRequestStatus().equals(RequestStatus.REQUESTED)){
-            if(friendRequest.get().getUser1().getId() == user.getId() || friendRequest.get().getUser2().getId() == user.getId() ) {
+            if(friendRequest.get().getUser2().getId() == user.getId() ) { // only user 2 ( reveiver )
                 friendRequest.get().setRequestStatus(RequestStatus.DECLINED);
                 friendRepo.save(friendRequest.get());
             }
@@ -87,6 +87,24 @@ public class FriendService {
         else{
             throw new RuntimeException("Friend request not found or already declined");
         }
+    }
+
+    public List<FriendResponse> getSentFriendRequests(){
+        User user = SecurityUtils.getCurrentUser();
+        //only find by user1 ( the sender )
+        List<Friend> friendRequests = friendRepo.findByUser1AndRequestStatus(user, RequestStatus.REQUESTED);
+        return friendRequests.stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
+    public List<FriendResponse> getReceiverFriendRequests(){
+        User user = SecurityUtils.getCurrentUser();
+        //only find by user2 ( the receiver )
+        List<Friend> friendRequests = friendRepo.findByUser2AndRequestStatus(user, RequestStatus.REQUESTED);
+        return friendRequests.stream()
+                .map(this::convertToResponse)
+                .toList();
     }
 
     public List<FriendResponse> getAllFriends(int id){
@@ -132,6 +150,39 @@ public class FriendService {
         }
     }
 
+    public List<User> findUsersByName(String name){
+        User user = SecurityUtils.getCurrentUser();
+        List<Friend> friendsAsUser1 = friendRepo.findByUser1AndRequestStatus(user, RequestStatus.APPROVED);
+        List<Friend> friendsAsUser2 = friendRepo.findByUser2AndRequestStatus(user, RequestStatus.APPROVED);
+        List<Friend> allFriends = new ArrayList<>(friendsAsUser1);
+        allFriends.addAll(friendsAsUser2);
+        allFriends.removeIf(friend -> {
+            if(friend.isBlocked()){
+                return true;
+            }
+
+            User theFriend = friend.getUser1().getId() == user.getId()
+                    ? friend.getUser2()
+                    : friend.getUser1();
+
+            return theFriend.getName() == null || !theFriend.getName().toLowerCase().contains(name.toLowerCase());
+        });
+        
+        List<User> users = extractUsers(allFriends);
+        users.removeIf(user1 -> user1.getId() == user.getId());
+        return users;
+    }
+
+    private List<User> extractUsers(List<Friend> friends){
+        List<User> users = new ArrayList<>();
+        for(Friend friend : friends){
+            users.add(friend.getUser1());
+            users.add(friend.getUser2());
+        }
+        return users.stream()
+                .distinct()
+                .collect(Collectors.toList());
+    }
 
     private FriendResponse convertToResponse(Friend friend) {
         FriendResponse response = new FriendResponse();

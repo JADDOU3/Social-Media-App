@@ -29,6 +29,9 @@ public class UserService implements UserDetailsService {
     private static final String PASSWORD_REGEX = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*])(.{8,})$";
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(PASSWORD_REGEX);
 
+    private static final String EMAIL_REGEX = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$";
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(EMAIL_REGEX);
+
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -37,6 +40,10 @@ public class UserService implements UserDetailsService {
     }
 
     public User Register(RegisterRequest registerRequest) {
+        if (!isEmailValid(registerRequest.getEmail())) {
+            throw new IllegalArgumentException("Invalid email format");
+        }
+
         if(userRepo.existsByEmail(registerRequest.getEmail())){
             throw new IllegalArgumentException("Email already exists");
         }
@@ -74,6 +81,13 @@ public class UserService implements UserDetailsService {
             return false;
         }
         return PASSWORD_PATTERN.matcher(password).matches();
+    }
+
+    private boolean isEmailValid(String email) {
+        if (email == null || email.isEmpty()) {
+            return false;
+        }
+        return EMAIL_PATTERN.matcher(email).matches();
     }
 
 }
