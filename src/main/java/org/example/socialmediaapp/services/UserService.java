@@ -3,6 +3,7 @@ package org.example.socialmediaapp.services;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.example.socialmediaapp.dto.ProfileUpdateRequest;
 import org.example.socialmediaapp.dto.RegisterRequest;
 import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.repositories.UserRepo;
