@@ -37,23 +37,23 @@ public class SecurityConfig {
     @Autowired
     private final PasswordEncoder passwordEncoder;
 
-//    @Bean
-//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//        http
-//                .csrf(csrf -> csrf.disable())
-//                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-//                .exceptionHandling(exception -> exception
-//                        .authenticationEntryPoint(authenticationEntryPoint()) // 401
-//                        .accessDeniedHandler(accessDeniedHandler())           // 403
-//                )
-//                .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers("/api/auth/login","/api/users/register").permitAll().anyRequest().authenticated()
-//                )
-//                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-//                .userDetailsService(userService);
-//
-//        return http.build();
-//    }
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint()) // 401
+                        .accessDeniedHandler(accessDeniedHandler())           // 403
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/login","/api/users/register").permitAll().anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .userDetailsService(userService);
+
+        return http.build();
+    }
     @Bean
     public AuthenticationEntryPoint authenticationEntryPoint() {
         return (request, response, authException) -> {
@@ -71,13 +71,13 @@ public class SecurityConfig {
         };
     }
 
-//    @Bean
-//    public AuthenticationProvider authenticationProvider() {
-//        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-//        authProvider.setUserDetailsService(userService);
-//        authProvider.setPasswordEncoder(passwordEncoder);
-//        return authProvider;
-//    }
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userService);
+        authProvider.setPasswordEncoder(passwordEncoder);
+        return authProvider;
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {

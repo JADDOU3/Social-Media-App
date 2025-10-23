@@ -2,30 +2,27 @@ package org.example.socialmediaapp.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "ProfilePicture")
+@Table(name = "PostImage")
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProfilePicture {
-
+public class PostImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-
-    private String pictureName;
-    private String pictureType;
+    private String imageName;
+    private String imageType;
 
     @Lob
     @Basic(fetch = FetchType.LAZY)
     private byte[] imageData;
 
-    @OneToOne
-    @JoinColumn(name=("user_email"))
-    private User user;
+    @ManyToOne
+    @JoinColumn(name=("post_id"),nullable=false)
+    private Post post;
+
 }

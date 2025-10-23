@@ -1,12 +1,11 @@
 package org.example.socialmediaapp.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -21,9 +20,11 @@ import java.util.List;
 @NoArgsConstructor
 public class User implements UserDetails {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+
+    @Column(unique = true)
     private String email;
     private String password;
     private String name;
@@ -31,8 +32,8 @@ public class User implements UserDetails {
     private String location;
     private String gender;
     private String phoneNumber;
-    private String socialSituation;
     private Date dateOfBirth;
+    private String socialSituation;
 
     private String bio;
     private String profilePicture;
@@ -71,4 +72,8 @@ public class User implements UserDetails {
     public String getUsername() {
         return this.email;
     }
+
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Post> posts;
+
 }

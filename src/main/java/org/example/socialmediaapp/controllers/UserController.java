@@ -17,7 +17,7 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody RegisterRequest registerRequest){
+    public ResponseEntity<User> register(@RequestBody RegisterRequest registerRequest) {
         User user = userService.Register(registerRequest);
         return ResponseEntity.ok(user);
     }
