@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Pattern;
 
 @Service
@@ -81,6 +82,11 @@ public class UserService implements UserDetailsService {
             return false;
         }
         return PASSWORD_PATTERN.matcher(password).matches();
+    }
+
+    public List<User> findUsersByName(String name){
+        List<User> users = userRepo.findByNameContainingIgnoreCase(name);
+        return users;
     }
 
     private boolean isEmailValid(String email) {
