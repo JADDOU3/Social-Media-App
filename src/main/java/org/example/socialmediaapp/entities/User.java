@@ -48,16 +48,16 @@ public class User implements UserDetails {
             Date dateOfBirth,
             String socialSituation
     ) {
-       this.email = email;
-       this.password = password;
-       this.name = name;
-       this.job = job;
-       this.location = location;
-       this.gender = gender;
-       this.phoneNumber = phoneNumber;
-       this.dateOfBirth = dateOfBirth;
-       this.socialSituation = socialSituation;
-       this.createdDate = new Date();
+        this.email = email;
+        this.password = password;
+        this.name = name;
+        this.job = job;
+        this.location = location;
+        this.gender = gender;
+        this.phoneNumber = phoneNumber;
+        this.dateOfBirth = dateOfBirth;
+        this.socialSituation = socialSituation;
+        this.createdDate = new Date();
     }
 
     @Override
