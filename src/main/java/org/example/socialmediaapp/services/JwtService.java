@@ -16,7 +16,7 @@ public class JwtService {
 
     @Value("${jwt.secret}")
     private String jwtSecret;
-    private final long jwtExpirationMs = 86400000; // 1 day
+    private final long jwtExpirationMs = 604800000; // 7 days
 
     private Key getSignInKey(){
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());

@@ -11,6 +11,7 @@ import org.example.socialmediaapp.services.ProfileService;
 import org.example.socialmediaapp.services.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -94,4 +95,10 @@ public class UserController {
             return ResponseEntity.status(400).body(e.getMessage());
         }
     }
+    @GetMapping("/{name}")
+    public ResponseEntity<List<User>> findUsersByName(@PathVariable String name) {
+        List<User> users = userService.findUsersByName(name);
+        return ResponseEntity.ok(users);
+    }
+
 }
