@@ -9,6 +9,7 @@ import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.services.JwtService;
 import org.example.socialmediaapp.services.ProfileService;
 import org.example.socialmediaapp.services.UserService;
+import org.example.socialmediaapp.utils.SecurityUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -31,11 +32,8 @@ public class UserController {
 
     // ===================== VIEW PROFILE =====================
     @GetMapping("/view")
-    public ResponseEntity<?> viewProfile(@RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.substring(7);
-        String email = jwtService.extractUsername(token);
-
-        User user = profileService.getProfileByEmail(email);
+    public ResponseEntity<?> viewProfile() {
+        User user = SecurityUtils.getCurrentUser();
         if (user == null) return ResponseEntity.status(404).body("{\"error\":\"User not found\"}");
 
         ProfileResponse response = new ProfileResponse(
@@ -54,16 +52,16 @@ public class UserController {
 
     // ===================== UPDATE PROFILE =====================
     @PutMapping("/update")
-    public ResponseEntity<?> updateProfile(
-            @RequestHeader("Authorization") String authHeader,
-            @RequestBody ProfileUpdateRequest request) {
-
-        String token = authHeader.substring(7);
-        String email = jwtService.extractUsername(token);
-
-        User updatedUser = profileService.updateProfile(email, request);
-        if (updatedUser == null) return ResponseEntity.status(404).body("User not found");
-
+    public ResponseEntity<?> updateProfile(@RequestBody ProfileUpdateRequest request) {
+        User currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(401)
+                    .body("{\"error\":\"Unauthorized: Invalid or missing token\"}");
+        }
+        User updatedUser = profileService.updateProfile(currentUser.getEmail(), request);
+        if (updatedUser == null) {
+            return ResponseEntity.status(404).body("{\"error\":\"User not found\"}");
+        }
         ProfileResponse response = new ProfileResponse(
                 updatedUser.getName(),
                 updatedUser.getEmail(),
@@ -78,27 +76,27 @@ public class UserController {
 
         return ResponseEntity.ok(response);
     }
-
     // ===================== CHANGE PASSWORD =====================
     @PutMapping("/change-password")
-    public ResponseEntity<?> changePassword(
-            @RequestHeader("Authorization") String authHeader,
-            @RequestBody PasswordChangeRequest request) {
-
-        String token = authHeader.substring(7);
-        String email = jwtService.extractUsername(token);
+    public ResponseEntity<?> changePassword(@RequestBody PasswordChangeRequest request) {
+        // جلب المستخدم الحالي من الـ SecurityContext
+        User currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(401)
+                    .body("{\"error\":\"Unauthorized: Invalid or missing token\"}");
+        }
 
         try {
-            profileService.changePassword(email, request.getOldPassword(), request.getNewPassword());
+            profileService.changePassword(
+                    currentUser.getEmail(),
+                    request.getOldPassword(),
+                    request.getNewPassword()
+            );
             return ResponseEntity.ok("Password changed successfully");
         } catch (RuntimeException e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
     }
-    @GetMapping("/{name}")
-    public ResponseEntity<List<User>> findUsersByName(@PathVariable String name) {
-        List<User> users = userService.findUsersByName(name);
-        return ResponseEntity.ok(users);
-    }
+
 
 }
