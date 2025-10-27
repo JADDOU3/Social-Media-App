@@ -1,5 +1,6 @@
 package org.example.socialmediaapp.services;
 
+import jakarta.transaction.Transactional;
 import org.example.socialmediaapp.entities.ProfilePicture;
 import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.repositories.ProfilePictureRepo;
@@ -44,5 +45,17 @@ public class ProfilePictureService {
 
     public void deleteProfilePicture(String email) throws IOException {
         profilePictureRepo.findByUserEmail(email).ifPresent(profilePictureRepo::delete);
+    }
+
+    @Transactional
+    public ProfilePicture updateProfilePicture(String email, MultipartFile file) throws IOException {
+        ProfilePicture existing = profilePictureRepo.findByUserEmail(email)
+                .orElseThrow(() -> new RuntimeException("Profile picture not found for this user."));
+
+        existing.setImageData(file.getBytes());
+        existing.setPictureName(file.getOriginalFilename());
+        existing.setPictureType(file.getContentType());
+
+        return profilePictureRepo.save(existing);
     }
 }

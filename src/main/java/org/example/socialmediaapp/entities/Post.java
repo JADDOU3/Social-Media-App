@@ -21,8 +21,6 @@ public class Post {
     private int id;
 
     private int imageCount;
-    private int likeCount;
-    private int commentCount;
     private String text;
     private boolean deleted=false;
     private PostType postType;

@@ -30,6 +30,15 @@ public class ProfilePictureController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PutMapping("/{email}")
+    public ResponseEntity<ProfilePicture> updateProfilePicture(
+            @PathVariable String email,
+            @RequestParam("file") MultipartFile file
+    ) throws IOException {
+        ProfilePicture updated = profilePictureService.updateProfilePicture(email, file);
+        return ResponseEntity.ok(updated);
+    }
+
     @DeleteMapping("/{email}")
     public ResponseEntity<String> deleteProfilePicture(@PathVariable String email) throws IOException {
         profilePictureService.deleteProfilePicture(email);

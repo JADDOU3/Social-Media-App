@@ -36,7 +36,6 @@ public class PostCommentService {
         postComment.setAuthor(user);
         postComment.setCreatedDate(LocalDateTime.now());
         PostComment saved=postCommentRepo.save(postComment);
-        post.setCommentCount(post.getCommentCount()+1);
         postRepo.save(post);
 
         return toResponse(saved);
@@ -64,7 +63,6 @@ public class PostCommentService {
         }
         Post post=commentToDelete.getPost();
         postCommentRepo.delete(commentToDelete);
-        post.setCommentCount(Math.max(0,post.getCommentCount()-1));
         postRepo.save(post);
     }
 }

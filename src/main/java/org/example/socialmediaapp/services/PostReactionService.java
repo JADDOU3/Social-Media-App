@@ -44,7 +44,6 @@ public class PostReactionService {
             postReactionRepo.save(newReaction);
         }
         int totalReactions = postReactionRepo.countByPost(post);
-        post.setLikeCount(totalReactions);
         postRepo.save(post);
 
         return new PostReactionResponse(post.getId(), reactionType, totalReactions);
