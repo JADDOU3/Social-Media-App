@@ -21,16 +21,13 @@ public class UserController {
 
     private final UserService userService;
     private final ProfileService profileService;
-    private final JwtService jwtService;
 
-    // ===================== REGISTER =====================
     @PostMapping("/register")
     public ResponseEntity<User> register(@RequestBody RegisterRequest registerRequest) {
         User user = userService.Register(registerRequest);
         return ResponseEntity.ok(user);
     }
 
-    // ===================== VIEW PROFILE =====================
     @GetMapping("/view")
     public ResponseEntity<?> viewProfile() {
         User user = SecurityUtils.getCurrentUser();
@@ -50,7 +47,6 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    // ===================== UPDATE PROFILE =====================
     @PutMapping("/update")
     public ResponseEntity<?> updateProfile(@RequestBody ProfileUpdateRequest request) {
         User currentUser = SecurityUtils.getCurrentUser();
@@ -76,10 +72,9 @@ public class UserController {
 
         return ResponseEntity.ok(response);
     }
-    // ===================== CHANGE PASSWORD =====================
+
     @PutMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody PasswordChangeRequest request) {
-        // جلب المستخدم الحالي من الـ SecurityContext
         User currentUser = SecurityUtils.getCurrentUser();
         if (currentUser == null) {
             return ResponseEntity.status(401)
@@ -96,6 +91,12 @@ public class UserController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
+    }
+
+    @GetMapping("/{name}")
+    public ResponseEntity<List<User>> findUsersByName(@PathVariable String name) {
+        List<User> users = userService.findUsersByName(name);
+        return ResponseEntity.ok(users);
     }
 
 
