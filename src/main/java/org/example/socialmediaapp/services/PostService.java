@@ -27,7 +27,7 @@ public class PostService {
     @Autowired
     private PostCommentRepo postCommentRepo;
     @Autowired
-    private PostLikeRepo postLikeRepo;
+    private PostReactionRepo postLikeRepo;
 
     @Transactional
     public PostResponse createPost(String email,PostRequest postRequest) throws IOException {
@@ -113,7 +113,7 @@ public class PostService {
         User user = userRepo.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Optional<PostLike> existing = postLikeRepo.findByPostAndUser(post, user);
+        Optional<PostReaction> existing = postLikeRepo.findByPostAndUser(post, user);
 
         if (existing.isPresent()) {
             postLikeRepo.delete(existing.get());
@@ -121,7 +121,7 @@ public class PostService {
             postRepo.save(post);
             return "Unliked this post";
         } else {
-            PostLike like = new PostLike();
+            PostReaction like = new PostReaction();
             like.setPost(post);
             like.setUser(user);
             postLikeRepo.save(like);

@@ -38,5 +38,5 @@ public class Post {
     private List<PostImage> images;
 
     @OneToMany(mappedBy = "post",  cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PostLike> likes;
+    private List<PostReaction> reactions;
 }
