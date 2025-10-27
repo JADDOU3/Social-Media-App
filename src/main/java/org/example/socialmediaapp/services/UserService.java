@@ -7,6 +7,7 @@ import org.example.socialmediaapp.dto.ProfileUpdateRequest;
 import org.example.socialmediaapp.dto.RegisterRequest;
 import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.repositories.UserRepo;
+import org.example.socialmediaapp.utils.PasswordChecker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,10 +27,7 @@ import java.util.regex.Pattern;
 public class UserService implements UserDetailsService {
     private final UserRepo userRepo;
     private final PasswordEncoder passwordEncoder;
-
-
-    private static final String PASSWORD_REGEX = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*])(.{8,})$";
-    private static final Pattern PASSWORD_PATTERN = Pattern.compile(PASSWORD_REGEX);
+    private final PasswordChecker passwordCheker;
 
     private static final String EMAIL_REGEX = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$";
     private static final Pattern EMAIL_PATTERN = Pattern.compile(EMAIL_REGEX);
@@ -50,7 +48,7 @@ public class UserService implements UserDetailsService {
             throw new IllegalArgumentException("Email already exists");
         }
 
-        if (!isPasswordStrong(registerRequest.getPassword())) {
+        if (!passwordCheker.isPasswordStrong(registerRequest.getPassword())) {
             throw new IllegalArgumentException(
                     "Password must be at least 8 characters long and contain: " +
                             "at least one uppercase letter, one lowercase letter, one digit, and one special character (!@#$%^&*)"
@@ -78,12 +76,7 @@ public class UserService implements UserDetailsService {
         return userRepo.existsByEmail(email);
     }
 
-    private boolean isPasswordStrong(String password) {
-        if (password == null || password.isEmpty()) {
-            return false;
-        }
-        return PASSWORD_PATTERN.matcher(password).matches();
-    }
+
 
     public List<User> findUsersByName(String name){
         List<User> users = userRepo.findByNameContainingIgnoreCase(name);

@@ -9,6 +9,7 @@ import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.services.JwtService;
 import org.example.socialmediaapp.services.ProfileService;
 import org.example.socialmediaapp.services.UserService;
+import org.example.socialmediaapp.utils.PasswordChecker;
 import org.example.socialmediaapp.utils.SecurityUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +22,8 @@ public class UserController {
 
     private final UserService userService;
     private final ProfileService profileService;
+
+    private final PasswordChecker passwordChecker;
 
     @PostMapping("/register")
     public ResponseEntity<User> register(@RequestBody RegisterRequest registerRequest) {
@@ -79,6 +82,13 @@ public class UserController {
         if (currentUser == null) {
             return ResponseEntity.status(401)
                     .body("{\"error\":\"Unauthorized: Invalid or missing token\"}");
+        }
+
+        if (!passwordChecker.isPasswordStrong(request.getNewPassword())) {
+            throw new IllegalArgumentException(
+                    "Password must be at least 8 characters long and contain: " +
+                            "at least one uppercase letter, one lowercase letter, one digit, and one special character (!@#$%^&*)"
+            );
         }
 
         try {
