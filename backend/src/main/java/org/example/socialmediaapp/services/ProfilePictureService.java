@@ -19,12 +19,11 @@ public class ProfilePictureService {
     @Autowired
     private UserRepo userRepo;
 
-    public ProfilePicture saveProfilePicture(String email, MultipartFile profilePicture) throws IOException {
-        User user=userRepo.findByEmail(email).orElseThrow(()->new RuntimeException("User not found"));
+    public ProfilePicture saveProfilePicture(User user, MultipartFile profilePicture) throws IOException {
 
         byte[] imageBytes = profilePicture.getBytes();
 
-        Optional<ProfilePicture> exist=profilePictureRepo.findByUserEmail(email);
+        Optional<ProfilePicture> exist = profilePictureRepo.findByUserEmail(user.getEmail());
         exist.ifPresent(profilePictureRepo::delete);
 
         ProfilePicture picture = ProfilePicture.builder()
