@@ -17,7 +17,7 @@ public class ProfilePictureController {
 
     @PostMapping("/{email}")
     public ResponseEntity<ProfilePicture> uploadProfilePicture(@PathVariable String email,@RequestParam("file") MultipartFile file) throws IOException {
-    ProfilePicture picture=profilePictureService.saveProfilePicture(email,file);
+    ProfilePicture picture = profilePictureService.saveProfilePicture(email,file);
     return ResponseEntity.ok().body(picture);
     }
 

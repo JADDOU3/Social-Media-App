@@ -6,7 +6,6 @@ import org.example.socialmediaapp.entities.Post;
 import org.example.socialmediaapp.entities.PostImage;
 import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.repositories.*;
-import org.example.socialmediaapp.utils.PostType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,11 +41,11 @@ public class PostService {
 
         boolean hasText = postRequest.getText() != null && !postRequest.getText().trim().isEmpty();
         boolean hasImages = postRequest.getImages() != null && !postRequest.getImages().isEmpty();
-
+        System.out.println("before checking");
         if (!hasText && !hasImages) {
             throw new RuntimeException("Post must have text or at least one image.");
         }
-
+        System.out.println("after checking");
         Post post = new Post();
         post.setAuthor(author);
         post.setText(hasText ? postRequest.getText().trim() : null);
@@ -72,7 +71,6 @@ public class PostService {
         }
 
         savedPost.setImageCount(imageCount);
-        setPostType(savedPost, hasText, imageCount);
         postRepo.save(savedPost);
 
         return toResponse(savedPost);
@@ -102,13 +100,11 @@ public class PostService {
         }
 
         boolean hasText = updatedRequest.getText() != null && !updatedRequest.getText().trim().isEmpty();
-        boolean hasImages = updatedRequest.getImages() != null && !updatedRequest.getImages().isEmpty();
 
         if (hasText) {
             post.setText(updatedRequest.getText().trim());
         }
 
-        setPostType(post, hasText, post.getImageCount());
         postRepo.save(post);
 
         return toResponse(post);
@@ -127,16 +123,6 @@ public class PostService {
         postRepo.save(post);
     }
 
-    private void setPostType(Post post, boolean hasText, int imageCount) {
-        if (hasText && imageCount > 0) {
-            post.setPostType(PostType.IMAGE_AND_TEXT);
-        } else if (hasText) {
-            post.setPostType(PostType.TEXT_ONLY);
-        } else {
-            post.setPostType(PostType.IMAGE_ONLY);
-        }
-    }
-
     public PostResponse toResponse(Post post) {
         PostResponse response = new PostResponse();
         response.setId(post.getId());
@@ -145,7 +131,6 @@ public class PostService {
         response.setAuthorName(post.getAuthor().getName());
         response.setCreatedDate(post.getCreatedDate());
         response.setImageCount(post.getImageCount());
-        response.setPostType(post.getPostType());
 
         if (post.getImages() != null && !post.getImages().isEmpty()) {
             response.setImageNames(

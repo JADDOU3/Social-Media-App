@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.socialmediaapp.utils.PostType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,7 +22,6 @@ public class Post {
     private int imageCount;
     private String text;
     private boolean deleted=false;
-    private PostType postType;
     private LocalDateTime createdDate;
     @ManyToOne
     @JoinColumn(name = "user_email", nullable = false)

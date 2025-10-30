@@ -1,7 +1,6 @@
 package org.example.socialmediaapp.dto;
 
 import lombok.Data;
-import org.example.socialmediaapp.utils.PostType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,5 +15,4 @@ public class PostResponse {
     private LocalDateTime createdDate;
     private int imageCount;
     private List<String> imageNames;
-    private PostType postType;
 }
