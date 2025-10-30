@@ -31,6 +31,7 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+
     @GetMapping("/view")
     public ResponseEntity<?> viewProfile() {
         User user = SecurityUtils.getCurrentUser();
