@@ -77,3 +77,4 @@ public class User implements UserDetails {
     private List<Post> posts;
 
 }
+

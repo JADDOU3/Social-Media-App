@@ -1,12 +1,14 @@
 package org.example.socialmediaapp.services;
 
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.example.socialmediaapp.dto.ProfileUpdateRequest;
 import org.example.socialmediaapp.dto.RegisterRequest;
 import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.repositories.UserRepo;
-import org.springframework.stereotype.Service;
+import org.example.socialmediaapp.utils.PasswordChecker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,7 +20,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Date;
 import java.util.Optional;
+import org.springframework.stereotype.Service;
 
+import java.util.Date;
+import java.util.List;
+import java.util.regex.Pattern;
 
 @Service
 @Transactional(rollbackOn =  Exception.class)
@@ -27,9 +33,6 @@ public class UserService implements UserDetailsService {
     private final UserRepo userRepo;
     private final PasswordEncoder passwordEncoder;
 
-    public Optional<User> findByEmail(String email) {
-        return userRepo.findByEmail(email);//exclude password
-    }
 
     public void deleteByEmail(String email) {
         if(userRepo.findByEmail(email).isEmpty()) {
@@ -67,12 +70,12 @@ public class UserService implements UserDetailsService {
         return userRepo.save(userToBeUpdated);
     }
 
-    public User createUser(User user) {
-        if (userRepo.findByEmail(user.getEmail()).isPresent()) {
-            throw new IllegalStateException("User with email already exists");
-        }
-        return userRepo.save(user);
-    }
+    private final PasswordChecker passwordCheker;
+
+    private static final String EMAIL_REGEX = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$";
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(EMAIL_REGEX);
+
+
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -81,10 +84,22 @@ public class UserService implements UserDetailsService {
     }
 
     public User Register(RegisterRequest registerRequest) {
+
+        if (!isEmailValid(registerRequest.getEmail())) {
+            throw new IllegalArgumentException("Invalid email format");
+        }
+
         if(userRepo.existsByEmail(registerRequest.getEmail())){
             throw new IllegalArgumentException("Email already exists");
         }
 
+
+        if (!passwordCheker.isPasswordStrong(registerRequest.getPassword())) {
+            throw new IllegalArgumentException(
+                    "Password must be at least 8 characters long and contain: " +
+                            "at least one uppercase letter, one lowercase letter, one digit, and one special character (!@#$%^&*)"
+            );
+        }
 
         String hashedPassword = passwordEncoder.encode(registerRequest.getPassword());
 
@@ -101,5 +116,25 @@ public class UserService implements UserDetailsService {
         );
         return userRepo.save(user);
     }
-}
 
+
+
+    public boolean existsByEmail(String email) {
+        return userRepo.existsByEmail(email);
+    }
+
+
+
+    public List<User> findUsersByName(String name){
+        List<User> users = userRepo.findByNameContainingIgnoreCase(name);
+        return users;
+    }
+
+    private boolean isEmailValid(String email) {
+        if (email == null || email.isEmpty()) {
+            return false;
+        }
+        return EMAIL_PATTERN.matcher(email).matches();
+    }
+
+}
