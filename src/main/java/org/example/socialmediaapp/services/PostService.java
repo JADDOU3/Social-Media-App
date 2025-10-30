@@ -35,10 +35,7 @@ public class PostService {
     private PostReactionRepo postReactionRepo;
 
     @Transactional
-    public PostResponse createPost(String email, PostRequest postRequest) throws IOException {
-        User author = userRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+    public PostResponse createPost(User user , PostRequest postRequest) throws IOException {
         boolean hasText = postRequest.getText() != null && !postRequest.getText().trim().isEmpty();
         boolean hasImages = postRequest.getImages() != null && !postRequest.getImages().isEmpty();
         System.out.println("before checking");
@@ -47,7 +44,7 @@ public class PostService {
         }
         System.out.println("after checking");
         Post post = new Post();
-        post.setAuthor(author);
+        post.setAuthor(user);
         post.setText(hasText ? postRequest.getText().trim() : null);
         post.setCreatedDate(LocalDateTime.now());
         post.setDeleted(false);

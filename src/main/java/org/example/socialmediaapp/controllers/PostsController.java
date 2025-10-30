@@ -7,6 +7,7 @@ import org.example.socialmediaapp.services.PostService;
 import org.example.socialmediaapp.services.PostReactionService;
 import org.example.socialmediaapp.services.UserService;
 import org.example.socialmediaapp.utils.ReactionType;
+import org.example.socialmediaapp.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -38,53 +39,54 @@ public class PostsController {
     public ResponseEntity<List<PostResponse>> getAllPosts() {
         return ResponseEntity.ok(postService.getAllPosts());
     }
-    @PostMapping("/{email}")
+
+    @PostMapping("/")
     public ResponseEntity<PostResponse> createPost(
-            @PathVariable String email,
-            @RequestPart(value = "text", required = false) String text,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images
+            @RequestBody(required = false) String text,
+            @RequestBody(required = false) List<MultipartFile> images
     ) throws IOException {
-        User user = userService.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = SecurityUtils.getCurrentUser();
         PostRequest request = new PostRequest();
         request.setText(text);
         request.setImages(images);
-        return ResponseEntity.ok(postService.createPost(user.getEmail(), request));
+        return ResponseEntity.ok(postService.createPost(user, request));
     }
 
     @GetMapping("/my")
-    public ResponseEntity<List<PostResponse>> getMyPosts(User author) {
-        return ResponseEntity.ok(postService.getMyPosts(author.getEmail()));
+    public ResponseEntity<List<PostResponse>> getMyPosts() {
+        User user = SecurityUtils.getCurrentUser();
+        return ResponseEntity.ok(postService.getMyPosts(user.getEmail()));
     }
 
     @PutMapping("/{postId}/update")
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable int postId,
-            User author,
             @RequestPart(value = "text", required = false) String text,
             @RequestPart(value = "images", required = false) List<MultipartFile> newImages
     ) throws IOException {
-        String email = author.getEmail();
+        User user = SecurityUtils.getCurrentUser();
 
         PostRequest request = new PostRequest();
         request.setText(text);
         request.setImages(newImages);
 
-        return ResponseEntity.ok(postService.updatePost(postId, email, request));
+        return ResponseEntity.ok(postService.updatePost(postId, user.getEmail(), request));
     }
 
     @DeleteMapping("/{postId}")
-    public ResponseEntity<String> deletePost(@PathVariable int postId, User author) {
-        postService.deletePost(postId, author.getEmail());
+    public ResponseEntity<String> deletePost(@PathVariable int postId) {
+        User user = SecurityUtils.getCurrentUser();
+        postService.deletePost(postId, user.getEmail());
         return ResponseEntity.ok("Post deleted successfully.");
     }
 
     @PostMapping("/{postId}/react")
     public ResponseEntity<String> reactToPost(
             @PathVariable int postId,
-            @AuthenticationPrincipal User author,
             @RequestParam ReactionType reactionType
     ) {
-        postReactionService.reactToPost(postId, author, reactionType);
+        User user = SecurityUtils.getCurrentUser();
+        postReactionService.reactToPost(postId, user, reactionType);
         return ResponseEntity.ok("Reaction updated.");
     }
 }
