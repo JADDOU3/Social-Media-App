@@ -42,8 +42,8 @@ public class PostsController {
 
     @PostMapping("/")
     public ResponseEntity<PostResponse> createPost(
-            @RequestBody(required = false) String text,
-            @RequestBody(required = false) List<MultipartFile> images
+            @RequestPart(value="text",required = false) String text,
+            @RequestPart(value="images",required = false) List<MultipartFile> images
     ) throws IOException {
         User user = SecurityUtils.getCurrentUser();
         PostRequest request = new PostRequest();
