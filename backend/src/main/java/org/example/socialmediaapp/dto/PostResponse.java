@@ -14,5 +14,5 @@ public class PostResponse {
     private String authorName;
     private LocalDateTime createdDate;
     private int imageCount;
-    private List<String> imageNames;
+    private List<String> imageUrls;
 }
