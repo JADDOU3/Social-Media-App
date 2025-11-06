@@ -706,8 +706,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         _buildStatItem('Posts', _posts.length.toString(), isDark),
                         _buildDivider(isDark),
                         _buildStatItem('Friends', '0', isDark),
-                        _buildDivider(isDark),
-                        _buildStatItem('Following', '0', isDark),
                       ],
                     ),
                     const SizedBox(height: 20),
