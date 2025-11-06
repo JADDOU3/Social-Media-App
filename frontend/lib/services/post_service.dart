@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
+import 'dart:typed_data';
 import '../models/post.dart';
 import 'api_service.dart';
-import 'dart:typed_data';
 
 class PostService {
   final ApiService _apiService;
@@ -29,33 +29,32 @@ class PostService {
   }
 
   Future<Post> createPost({
-    required String text,
+    String? text,
     List<Uint8List>? images,
   }) async {
     try {
-      FormData formData = FormData.fromMap({
-        'text': text,
-        if (images != null && images.isNotEmpty)
-          'images': images
-              .asMap()
-              .entries
-              .map((entry) => MultipartFile.fromBytes(
-            entry.value,
-            filename: 'image_${entry.key}.jpg',
-          ))
-              .toList(),
-      });
+      // Build form data with optional fields
+      Map<String, dynamic> formDataMap = {};
 
-      final response = await _apiService._dio.post(
-        'posts/',
-        data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-          extra: {'auth_required': true},
-        ),
-      );
+      if (text != null && text.isNotEmpty) {
+        formDataMap['text'] = text;
+      }
 
-      return Post.fromJson(response.data);
+      if (images != null && images.isNotEmpty) {
+        formDataMap['images'] = images
+            .asMap()
+            .entries
+            .map((entry) => MultipartFile.fromBytes(
+          entry.value as List<int>,
+          filename: 'image_${entry.key}.jpg',
+        ))
+            .toList();
+      }
+
+      FormData formData = FormData.fromMap(formDataMap);
+
+      final response = await _apiService.postFormData('posts/', formData);
+      return Post.fromJson(response);
     } catch (e) {
       throw Exception('Failed to create post: $e');
     }
@@ -63,33 +62,31 @@ class PostService {
 
   Future<Post> updatePost({
     required int postId,
-    required String text,
+    String? text,
     List<Uint8List>? newImages,
   }) async {
     try {
-      FormData formData = FormData.fromMap({
-        'text': text,
-        if (newImages != null && newImages.isNotEmpty)
-          'images': newImages
-              .asMap()
-              .entries
-              .map((entry) => MultipartFile.fromBytes(
-            entry.value,
-            filename: 'image_${entry.key}.jpg',
-          ))
-              .toList(),
-      });
+      Map<String, dynamic> formDataMap = {};
 
-      final response = await _apiService._dio.put(
-        'posts/$postId/update',
-        data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-          extra: {'auth_required': true},
-        ),
-      );
+      if (text != null && text.isNotEmpty) {
+        formDataMap['text'] = text;
+      }
 
-      return Post.fromJson(response.data);
+      if (newImages != null && newImages.isNotEmpty) {
+        formDataMap['images'] = newImages
+            .asMap()
+            .entries
+            .map((entry) => MultipartFile.fromBytes(
+          entry.value as List<int>,
+          filename: 'image_${entry.key}.jpg',
+        ))
+            .toList();
+      }
+
+      FormData formData = FormData.fromMap(formDataMap);
+
+      final response = await _apiService.putFormData('posts/$postId/update', formData);
+      return Post.fromJson(response);
     } catch (e) {
       throw Exception('Failed to update post: $e');
     }
@@ -114,4 +111,3 @@ class PostService {
     }
   }
 }
-

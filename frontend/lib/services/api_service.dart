@@ -1,17 +1,17 @@
 import 'dart:io';
-
-import 'package:flutter/foundation.dart';
-
-import 'local_storage_service.dart';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:flutter/foundation.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'local_storage_service.dart';
 
 class ApiService {
   final Dio _dio;
   final LocalStorageService _localStorageService;
 
-  static const String _baseUrl = 'https://localhost:8080/api/';
+  // Use HTTP to match your Spring Boot configuration
+  static const String _baseUrl = 'http://localhost:8080/api/';
 
   static String getBaseUrl() => _baseUrl;
 
@@ -26,7 +26,8 @@ class ApiService {
       receiveTimeout: const Duration(seconds: 30),
     ),
   ) {
-    if (!kIsWeb && _dio.httpClientAdapter is IOHttpClientAdapter) {
+    // Bypass SSL certificate verification for localhost (development only!)
+    if (!kIsWeb) {
       (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
         final client = HttpClient();
         client.badCertificateCallback =
@@ -83,6 +84,26 @@ class ApiService {
     }
   }
 
+  Future<Uint8List> getBytes(
+      String path, {
+        Map<String, dynamic>? queryParameters,
+        bool authRequired = true,
+      }) async {
+    try {
+      final response = await _dio.get(
+        path,
+        queryParameters: queryParameters,
+        options: Options(
+          responseType: ResponseType.bytes,
+          extra: {'auth_required': authRequired},
+        ),
+      );
+      return response.data as Uint8List;
+    } on DioException {
+      rethrow;
+    }
+  }
+
   Future<dynamic> post(
       String path, {
         dynamic data,
@@ -93,6 +114,26 @@ class ApiService {
         path,
         data: data,
         options: Options(extra: {'auth_required': authRequired}),
+      );
+      return response.data;
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<dynamic> postFormData(
+      String path,
+      FormData formData, {
+        bool authRequired = true,
+      }) async {
+    try {
+      final response = await _dio.post(
+        path,
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+          extra: {'auth_required': authRequired},
+        ),
       );
       return response.data;
     } on DioException {
@@ -137,4 +178,25 @@ class ApiService {
     );
     return response.data;
   }
+
+  Future<dynamic> putFormData(
+      String path,
+      FormData formData, {
+        bool authRequired = true,
+      }) async {
+    try {
+      final response = await _dio.put(
+        path,
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+          extra: {'auth_required': authRequired},
+        ),
+      );
+      return response.data;
+    } on DioException {
+      rethrow;
+    }
+  }
 }
+

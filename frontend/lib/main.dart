@@ -10,7 +10,13 @@ import 'package:frontend/utils/app_theme.dart';
 import 'package:frontend/utils/theme_provider.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async {
+  const secureStorage = FlutterSecureStorage();
+  final localStorageService = LocalStorageService(secureStorage);
+
+  //for testing ...
+  await localStorageService.saveAccessToken("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0aW5nMUBnbWFpbC5jb20iLCJpYXQiOjE3NjI0MDk3NTYsImV4cCI6MTc2MzAxNDU1Nn0.IICDPS6zW7IDBrT4cNMdJn48PkZET4XCRsNRg8d5gcw");
+
   runApp(const MyApp());
 }
 

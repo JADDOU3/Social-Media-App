@@ -9,14 +9,8 @@ class ProfilePictureService {
 
   Future<Uint8List?> getProfilePicture() async {
     try {
-      final response = await _apiService._dio.get(
-        'profilepicture/',
-        options: Options(
-          responseType: ResponseType.bytes,
-          extra: {'auth_required': true},
-        ),
-      );
-      return response.data as Uint8List;
+      final response = await _apiService.getBytes('profilepicture/');
+      return response;
     } catch (e) {
       return null;
     }
@@ -24,21 +18,14 @@ class ProfilePictureService {
 
   Future<void> uploadProfilePicture(Uint8List imageBytes, String filename) async {
     try {
-      FormData formData = FormData.fromMap({
+      final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(
           imageBytes,
           filename: filename,
         ),
       });
 
-      await _apiService._dio.post(
-        'profilepicture/',
-        data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-          extra: {'auth_required': true},
-        ),
-      );
+      await _apiService.postFormData('profilepicture/', formData);
     } catch (e) {
       throw Exception('Failed to upload profile picture: $e');
     }
@@ -46,21 +33,14 @@ class ProfilePictureService {
 
   Future<void> updateProfilePicture(Uint8List imageBytes, String filename) async {
     try {
-      FormData formData = FormData.fromMap({
+      final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(
           imageBytes,
           filename: filename,
         ),
       });
 
-      await _apiService._dio.put(
-        'profilepicture/',
-        data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-          extra: {'auth_required': true},
-        ),
-      );
+      await _apiService.putFormData('profilepicture/', formData);
     } catch (e) {
       throw Exception('Failed to update profile picture: $e');
     }
