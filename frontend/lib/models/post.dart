@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+
 class Post {
   final int id;
   final String? text;
@@ -18,27 +22,41 @@ class Post {
   });
 
   factory Post.fromJson(Map<String, dynamic> json) {
-    const String baseUrl = 'http://localhost:8080';
     List<String> imageUrls = [];
+
     if (json['imageUrls'] != null) {
-      if (json['imageUrls'] is List) {
-        imageUrls = List<String>.from(json['imageUrls'])
-            .map((url) => url.startsWith('http') ? url : '$baseUrl$url')
-            .toList();
-      }
+      final raw = json['imageUrls'].toString();
+      final matches = RegExp(r'http[^\s\]]+').allMatches(raw);
+      imageUrls = matches.map((m) {
+        var url = m.group(0)!;
+
+        if (kIsWeb) {
+          return url;
+        } else if (Platform.isAndroid) {
+          return url.replaceFirst('localhost', '10.0.2.2');
+        } else {
+          return url;
+        }
+      }).toList();
+    }
+
+    String? text;
+    if (json['text'] != null) {
+      final t = json['text'].toString();
+      final match = RegExp(r'"text"\s*:\s*"([^"]+)"').firstMatch(t);
+      text = match != null ? match.group(1) : t;
     }
 
     return Post(
       id: json['id'] as int,
-      text: json['text'] as String?,
+      text: text,
       authorEmail: json['authorEmail'] as String,
       authorName: json['authorName'] as String,
-      createdDate: DateTime.parse(json['createdDate'] as String),
+      createdDate: DateTime.parse(json['createdDate']),
       imageCount: json['imageCount'] as int,
       imageUrls: imageUrls,
     );
   }
-
 
   Map<String, dynamic> toJson() {
     return {
