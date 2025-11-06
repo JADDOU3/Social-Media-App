@@ -2,13 +2,16 @@ package org.example.socialmediaapp.controllers;
 
 import org.example.socialmediaapp.dto.PostRequest;
 import org.example.socialmediaapp.dto.PostResponse;
+import org.example.socialmediaapp.entities.PostImage;
 import org.example.socialmediaapp.entities.User;
+import org.example.socialmediaapp.repositories.PostImageRepo;
 import org.example.socialmediaapp.services.PostService;
 import org.example.socialmediaapp.services.PostReactionService;
 import org.example.socialmediaapp.services.UserService;
 import org.example.socialmediaapp.utils.ReactionType;
 import org.example.socialmediaapp.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,7 +30,7 @@ public class PostsController {
     private PostService postService;
 
     @Autowired
-    private UserService userService;
+    private PostImageRepo postImageRepo;
 
     @Autowired
     private PostReactionService postReactionService;
@@ -56,6 +59,20 @@ public class PostsController {
     public ResponseEntity<List<PostResponse>> getMyPosts() {
         User user = SecurityUtils.getCurrentUser();
         return ResponseEntity.ok(postService.getMyPosts(user.getEmail()));
+    }
+
+
+    @GetMapping("/{postId}/images/{imageId}")
+    public ResponseEntity<byte[]> getPostImage(
+            @PathVariable int postId,
+            @PathVariable int imageId) {
+
+        PostImage image = postImageRepo.findById(imageId)
+                .orElseThrow(() -> new RuntimeException("Image not found"));
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, image.getImageType())
+                .body(image.getImageData());
     }
 
     @PutMapping("/{postId}/update")

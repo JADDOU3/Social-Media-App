@@ -18,11 +18,13 @@ class Post {
   });
 
   factory Post.fromJson(Map<String, dynamic> json) {
-    // Handle imageNames which can be null or a list
+    const String baseUrl = 'http://localhost:8080';
     List<String> imageUrls = [];
-    if (json['imageNames'] != null) {
-      if (json['imageNames'] is List) {
-        imageUrls = List<String>.from(json['imageNames']);
+    if (json['imageUrls'] != null) {
+      if (json['imageUrls'] is List) {
+        imageUrls = List<String>.from(json['imageUrls'])
+            .map((url) => url.startsWith('http') ? url : '$baseUrl$url')
+            .toList();
       }
     }
 
@@ -36,6 +38,7 @@ class Post {
       imageUrls: imageUrls,
     );
   }
+
 
   Map<String, dynamic> toJson() {
     return {

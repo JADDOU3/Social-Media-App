@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -130,13 +131,16 @@ public class PostService {
         response.setImageCount(post.getImageCount());
 
         if (post.getImages() != null && !post.getImages().isEmpty()) {
-            response.setImageNames(
+            String baseUrl = "http://localhost:8080";
+            response.setImageUrls(
                     post.getImages().stream()
-                            .map(PostImage::getImageName)
+                            .map(img -> baseUrl + "/api/posts/" + post.getId() + "/images/" + img.getId())
                             .collect(Collectors.toList())
             );
         }
 
         return response;
     }
+
+
 }
