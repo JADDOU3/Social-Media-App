@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.socialmediaapp.utils.ReactionType;
+import org.example.socialmediaapp.utils.enums.ReactionType;
 
 @Entity
 @Data

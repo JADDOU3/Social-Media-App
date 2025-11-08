@@ -2,7 +2,7 @@ package org.example.socialmediaapp.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.example.socialmediaapp.utils.ReactionType;
+import org.example.socialmediaapp.utils.enums.ReactionType;
 
 @Data
 @AllArgsConstructor

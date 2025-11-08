@@ -6,7 +6,7 @@ import org.example.socialmediaapp.entities.PostReaction;
 import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.repositories.PostReactionRepo;
 import org.example.socialmediaapp.repositories.PostRepo;
-import org.example.socialmediaapp.utils.ReactionType;
+import org.example.socialmediaapp.utils.enums.ReactionType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

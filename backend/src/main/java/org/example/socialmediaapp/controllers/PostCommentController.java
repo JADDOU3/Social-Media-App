@@ -4,6 +4,7 @@ import org.example.socialmediaapp.dto.CommentRequest;
 import org.example.socialmediaapp.dto.CommentResponse;
 import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.services.PostCommentService;
+import org.example.socialmediaapp.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +19,9 @@ public class PostCommentController {
 
     @PostMapping("/add")
     public ResponseEntity<CommentResponse> add(
-            User author,
             @RequestBody CommentRequest request
     ) {
-        String email = author.getUsername();
+        String email = SecurityUtils.getCurrentUser().getEmail();
         return ResponseEntity.ok(postCommentService.addComment(email, request.getPostId(), request.getComment()));
     }
 
@@ -32,14 +32,11 @@ public class PostCommentController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
-            User author,
             @PathVariable int id
     ) {
-        String email = author.getUsername();
+        String email = SecurityUtils.getCurrentUser().getEmail();
         postCommentService.deleteComment(email, id);
         return ResponseEntity.noContent().build();
     }
-
-
 
 }
