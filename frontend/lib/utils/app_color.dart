@@ -1,8 +1,8 @@
 import 'dart:ui';
 
-class AppColors{
+class AppColors {
   static const Color primary = Color(0xFFAF92D7);
-  static const Color secondary = Color(0xFF6C5CE7);
+  static const Color secondary = Color(0xFFD98DAF);
 
   // Light Mode Colors
   static const Color lightBackground = Color(0xFFF5F5F5);
@@ -27,4 +27,10 @@ class AppColors{
   // Common colors
   static const Color success = Color(0xFF4CAF50);
   static const Color error = Color(0xFFF44336);
+
+  // Reaction Colors
+  static const Color reactionLike = Color(0xFF2196F3);
+  static const Color reactionLove = Color(0xFFE91E63);
+  static const Color reactionHaha = Color(0xFFFFA726);
+  static const Color reactionAngry = Color(0xFFF44336);
 }
