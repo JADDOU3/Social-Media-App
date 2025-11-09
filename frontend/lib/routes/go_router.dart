@@ -6,13 +6,17 @@ import 'package:frontend/services/api_service.dart';
 import 'package:frontend/services/local_storage_service.dart';
 import 'package:go_router/go_router.dart';
 
+import '../screens/home_screan.dart';
 import '../services/comment_service.dart';
 import '../services/post_service.dart';
 import '../services/profile_picture_service.dart';
 import '../services/user_service.dart';
 
-final GlobalKey<NavigatorState> rootNavigatorKey =  GlobalKey<NavigatorState>(debugLabel: 'root');
-final secureStorage = FlutterSecureStorage();
+
+final GlobalKey<NavigatorState> rootNavigatorKey =
+GlobalKey<NavigatorState>(debugLabel: 'root');
+
+const secureStorage = FlutterSecureStorage();
 final localStorage = LocalStorageService(secureStorage);
 final apiService = ApiService(localStorage);
 final userService = UserService(apiService);
@@ -22,17 +26,21 @@ final commentService = CommentService(apiService);
 
 final GoRouter router = GoRouter(
   navigatorKey: rootNavigatorKey,
-  initialLocation: AppRoutes.main,
+  initialLocation: AppRoutes.home,
   routes: [
     GoRoute(
+      path: AppRoutes.home,
+      builder: (context, state) => const HomeScreen(),
+    ),
+    GoRoute(
       path: AppRoutes.profile,
-      builder: (context , state) => ProfileScreen(
-          userService: userService,
-          profilePictureService: profilePictureService,
-          postService: postService,
-          commentService: commentService,
+      builder: (context, state) => ProfileScreen(
+        userService: userService,
+        profilePictureService: profilePictureService,
+        postService: postService,
+        commentService: commentService,
       ),
     ),
-    //todo add routes here ^^
+    // TODO: Add more routes here
   ],
 );

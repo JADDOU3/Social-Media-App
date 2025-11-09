@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/post.dart';
 import '../models/user_profile.dart';
+import '../routes/app_router.dart';
 import '../services/post_service.dart';
 import '../services/profile_picture_service.dart';
 import '../services/user_service.dart';
@@ -94,14 +96,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (_isLoading) {
       return Scaffold(
-        appBar: _buildAppBar(isDark, themeProvider),
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.home_outlined),
+            onPressed: () {
+              context.go(AppRoutes.home);
+            },
+          ),
+          title: const Text('Profile'),
+          centerTitle: true,
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_error != null) {
       return Scaffold(
-        appBar: _buildAppBar(isDark, themeProvider),
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.home_outlined),
+            onPressed: () {
+              context.go(AppRoutes.home);
+            },
+          ),
+          title: const Text('Profile'),
+          centerTitle: true,
+        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -119,7 +139,102 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     return Scaffold(
-      appBar: _buildAppBar(isDark, themeProvider),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.home_outlined),
+          onPressed: () {
+            context.go(AppRoutes.home);
+          },
+        ),
+        title: const Text('Profile'),
+        centerTitle: true,
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.settings_outlined),
+            color: isDark
+                ? AppColors.darkCardBackground
+                : AppColors.lightCardBackground,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            onSelected: (value) {
+              if (value == 'theme') {
+                themeProvider.toggleTheme();
+              } else if (value == 'blocked') {
+                _navigateToBlockedList();
+              } else if (value == 'logout') {
+                _showLogoutConfirmation();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'theme',
+                child: Row(
+                  children: [
+                    Icon(
+                      isDark ? Icons.light_mode : Icons.dark_mode,
+                      size: 20,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      isDark ? 'Light Mode' : 'Dark Mode',
+                      style: TextStyle(
+                        color: isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.lightTextPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'blocked',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.block,
+                      size: 20,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Blocked List',
+                      style: TextStyle(
+                        color: isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.lightTextPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.logout,
+                      size: 20,
+                      color: AppColors.error,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Logout',
+                      style: TextStyle(color: AppColors.error),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _loadProfileData,
         child: SingleChildScrollView(
@@ -148,99 +263,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(bool isDark, ThemeProvider themeProvider) {
-    return AppBar(
-      title: const Text('Profile'),
-      centerTitle: true,
-      actions: [
-        PopupMenuButton<String>(
-          icon: const Icon(Icons.settings_outlined),
-          color: isDark
-              ? AppColors.darkCardBackground
-              : AppColors.lightCardBackground,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          onSelected: (value) {
-            if (value == 'theme') {
-              themeProvider.toggleTheme();
-            } else if (value == 'blocked') {
-              _navigateToBlockedList();
-            } else if (value == 'logout') {
-              _showLogoutConfirmation();
-            }
-          },
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 'theme',
-              child: Row(
-                children: [
-                  Icon(
-                    isDark ? Icons.light_mode : Icons.dark_mode,
-                    size: 20,
-                    color: isDark
-                        ? AppColors.darkTextPrimary
-                        : AppColors.lightTextPrimary,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    isDark ? 'Light Mode' : 'Dark Mode',
-                    style: TextStyle(
-                      color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.lightTextPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            PopupMenuItem(
-              value: 'blocked',
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.block,
-                    size: 20,
-                    color: isDark
-                        ? AppColors.darkTextPrimary
-                        : AppColors.lightTextPrimary,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Blocked List',
-                    style: TextStyle(
-                      color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.lightTextPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const PopupMenuDivider(),
-            PopupMenuItem(
-              value: 'logout',
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.logout,
-                    size: 20,
-                    color: AppColors.error,
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Logout',
-                    style: TextStyle(color: AppColors.error),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   void _navigateToBlockedList() {
     // TODO: Navigate to blocked list screen
     ScaffoldMessenger.of(context).showSnackBar(
@@ -253,7 +275,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showLogoutConfirmation() {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         final isDark = Provider.of<ThemeProvider>(context, listen: false).isDarkMode;
 
         return AlertDialog(
@@ -278,7 +300,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: Text(
                 'Cancel',
                 style: TextStyle(
@@ -290,15 +312,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             TextButton(
               onPressed: () async {
-                // TODO: Call your logout service/method here
-                // Example: await widget.authService.logout();
+                Navigator.pop(dialogContext);
 
-                Navigator.pop(context); // Close dialog
+                // TODO: Clear tokens - uncomment when you have access to localStorage
+                // await localStorage.clearTokens();
 
-                // TODO: Navigate to login screen
-                // Navigator.pushReplacementNamed(context, '/login');
-
-                if (mounted) {
+                if (context.mounted) {
+                  // TODO: Navigate to login screen when you have that route
+                  // context.go('/login');
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Logged out successfully'),
