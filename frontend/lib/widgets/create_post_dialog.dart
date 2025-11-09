@@ -21,8 +21,8 @@ class CreatePostDialog extends StatefulWidget {
 class _CreatePostDialogState extends State<CreatePostDialog> {
   final TextEditingController _textController = TextEditingController();
   final List<Uint8List> _selectedImages = [];
-  final ImagePicker _imagePicker = ImagePicker();
   bool _isPosting = false;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void dispose() {
@@ -32,7 +32,8 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
 
   Future<void> _pickImages() async {
     try {
-      final List<XFile> images = await _imagePicker.pickMultiImage();
+      final List<XFile> images = await _picker.pickMultiImage();
+
       if (images.isNotEmpty) {
         for (var image in images) {
           final bytes = await image.readAsBytes();
@@ -45,7 +46,7 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error picking images: $e'),
+            content: Text('Failed to pick images: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -60,10 +61,10 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   }
 
   Future<void> _createPost() async {
-    if (_textController.text.isEmpty && _selectedImages.isEmpty) {
+    if (_textController.text.trim().isEmpty && _selectedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please add some text or select images'),
+          content: Text('Please add some text or images'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -74,26 +75,27 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
 
     try {
       await widget.postService.createPost(
-        text: _textController.text.isEmpty ? null : _textController.text,
-        images: _selectedImages.isEmpty ? null : _selectedImages,
+        text: _textController.text.trim().isNotEmpty
+            ? _textController.text.trim()
+            : null,
+        images: _selectedImages.isNotEmpty ? _selectedImages : null,
       );
 
       if (mounted) {
         Navigator.pop(context);
-        widget.onPostCreated();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Post created successfully!'),
-            backgroundColor: AppColors.success,
+            content: Text('Post created successfully'),
           ),
         );
+        widget.onPostCreated();
       }
     } catch (e) {
       setState(() => _isPosting = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('Failed to create post: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -105,191 +107,192 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return AlertDialog(
+    return Dialog(
       backgroundColor: isDark
           ? AppColors.darkCardBackground
           : AppColors.lightCardBackground,
-      title: Text(
-        'Create New Post',
-        style: TextStyle(
-          color: isDark
-              ? AppColors.darkTextPrimary
-              : AppColors.lightTextPrimary,
-        ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
       ),
-      content: SingleChildScrollView(
+      child: Container(
+        constraints: const BoxConstraints(maxHeight: 600),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTextField(isDark),
-            const SizedBox(height: 16),
-            if (_selectedImages.isNotEmpty) ...[
-              _buildSelectedImages(isDark),
-              const SizedBox(height: 16),
-            ],
-            _buildAddImagesButton(isDark),
+            // Header
+            _buildHeader(isDark),
+            const Divider(height: 1),
+
+            // Content
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Text Input
+                    TextField(
+                      controller: _textController,
+                      maxLines: 5,
+                      style: TextStyle(
+                        color: isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.lightTextPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'What\'s on your mind?',
+                        hintStyle: TextStyle(
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
+                        ),
+                        border: InputBorder.none,
+                      ),
+                    ),
+
+                    // Selected Images
+                    if (_selectedImages.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      _buildImageGrid(isDark),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
+            const Divider(height: 1),
+
+            // Actions
+            _buildActions(isDark),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _isPosting ? null : () => Navigator.pop(context),
-          child: Text(
-            'Cancel',
+    );
+  }
+
+  Widget _buildHeader(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Text(
+            'Create Post',
             style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
               color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
             ),
           ),
-        ),
-        ElevatedButton(
-          onPressed: _isPosting ? null : _createPost,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-          ),
-          child: _isPosting
-              ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white,
-            ),
-          )
-              : const Text('Post'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextField(bool isDark) {
-    return TextField(
-      controller: _textController,
-      maxLines: 5,
-      style: TextStyle(
-        color: isDark
-            ? AppColors.darkTextPrimary
-            : AppColors.lightTextPrimary,
-      ),
-      decoration: InputDecoration(
-        hintText: 'What\'s on your mind?',
-        hintStyle: TextStyle(
-          color: isDark
-              ? AppColors.darkTextSecondary
-              : AppColors.lightTextSecondary,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(
-            color: AppColors.primary,
-            width: 2,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSelectedImages(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Selected Images (${_selectedImages.length})',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.pop(context),
             color: isDark
-                ? AppColors.darkTextPrimary
-                : AppColors.lightTextPrimary,
+                ? AppColors.darkTextSecondary
+                : AppColors.lightTextSecondary,
           ),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: _selectedImages.length,
-            itemBuilder: (context, index) {
-              return Stack(
-                children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      image: DecorationImage(
-                        image: MemoryImage(_selectedImages[index]),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 4,
-                    right: 12,
-                    child: GestureDetector(
-                      onTap: () => _removeImage(index),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: AppColors.error,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.close,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildAddImagesButton(bool isDark) {
-    return OutlinedButton.icon(
-      onPressed: _isPosting ? null : _pickImages,
-      icon: Icon(
-        Icons.image_outlined,
-        color: isDark
-            ? AppColors.darkTextPrimary
-            : AppColors.lightTextPrimary,
+  Widget _buildImageGrid(bool isDark) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
       ),
-      label: Text(
-        'Add Images',
-        style: TextStyle(
-          color: isDark
-              ? AppColors.darkTextPrimary
-              : AppColors.lightTextPrimary,
-        ),
-      ),
-      style: OutlinedButton.styleFrom(
-        side: BorderSide(
-          color: isDark
-              ? AppColors.darkDivider
-              : AppColors.lightDivider,
-        ),
+      itemCount: _selectedImages.length,
+      itemBuilder: (context, index) {
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.memory(
+                _selectedImages[index],
+                fit: BoxFit.cover,
+              ),
+            ),
+            Positioned(
+              top: 4,
+              right: 4,
+              child: GestureDetector(
+                onTap: () => _removeImage(index),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildActions(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.image_outlined),
+            onPressed: _isPosting ? null : _pickImages,
+            color: AppColors.primary,
+            tooltip: 'Add Photos',
+          ),
+          const Spacer(),
+          TextButton(
+            onPressed: _isPosting ? null : () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: _isPosting ? null : _createPost,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 12,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: _isPosting
+                ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+                : const Text('Post'),
+          ),
+        ],
       ),
     );
   }

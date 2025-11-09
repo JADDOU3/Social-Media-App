@@ -153,19 +153,167 @@ class _ProfileScreenState extends State<ProfileScreen> {
       title: const Text('Profile'),
       centerTitle: true,
       actions: [
-        IconButton(
-          icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
-          onPressed: () {
-            themeProvider.toggleTheme();
-          },
-        ),
-        IconButton(
+        PopupMenuButton<String>(
           icon: const Icon(Icons.settings_outlined),
-          onPressed: () {
-            // TODO: Navigate to settings
+          color: isDark
+              ? AppColors.darkCardBackground
+              : AppColors.lightCardBackground,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          onSelected: (value) {
+            if (value == 'theme') {
+              themeProvider.toggleTheme();
+            } else if (value == 'blocked') {
+              _navigateToBlockedList();
+            } else if (value == 'logout') {
+              _showLogoutConfirmation();
+            }
           },
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'theme',
+              child: Row(
+                children: [
+                  Icon(
+                    isDark ? Icons.light_mode : Icons.dark_mode,
+                    size: 20,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightTextPrimary,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    isDark ? 'Light Mode' : 'Dark Mode',
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'blocked',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.block,
+                    size: 20,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightTextPrimary,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Blocked List',
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const PopupMenuDivider(),
+            PopupMenuItem(
+              value: 'logout',
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.logout,
+                    size: 20,
+                    color: AppColors.error,
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Logout',
+                    style: TextStyle(color: AppColors.error),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  void _navigateToBlockedList() {
+    // TODO: Navigate to blocked list screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Blocked list coming soon...'),
+      ),
+    );
+  }
+
+  void _showLogoutConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final isDark = Provider.of<ThemeProvider>(context, listen: false).isDarkMode;
+
+        return AlertDialog(
+          backgroundColor: isDark
+              ? AppColors.darkCardBackground
+              : AppColors.lightCardBackground,
+          title: Text(
+            'Logout',
+            style: TextStyle(
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                // TODO: Call your logout service/method here
+                // Example: await widget.authService.logout();
+
+                Navigator.pop(context); // Close dialog
+
+                // TODO: Navigate to login screen
+                // Navigator.pushReplacementNamed(context, '/login');
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Logged out successfully'),
+                    ),
+                  );
+                }
+              },
+              child: const Text(
+                'Logout',
+                style: TextStyle(color: AppColors.error),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
