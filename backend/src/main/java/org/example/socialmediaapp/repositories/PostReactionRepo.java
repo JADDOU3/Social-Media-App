@@ -1,7 +1,7 @@
 package org.example.socialmediaapp.repositories;
 
 import org.example.socialmediaapp.entities.*;
-import org.example.socialmediaapp.utils.ReactionType;
+import org.example.socialmediaapp.utils.enums.ReactionType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

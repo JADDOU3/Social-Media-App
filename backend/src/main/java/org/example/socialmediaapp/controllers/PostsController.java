@@ -7,17 +7,13 @@ import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.repositories.PostImageRepo;
 import org.example.socialmediaapp.services.PostService;
 import org.example.socialmediaapp.services.PostReactionService;
-import org.example.socialmediaapp.services.UserService;
-import org.example.socialmediaapp.utils.ReactionType;
+import org.example.socialmediaapp.utils.enums.ReactionType;
 import org.example.socialmediaapp.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.IOException;
 import java.util.List;
