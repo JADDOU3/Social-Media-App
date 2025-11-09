@@ -6,6 +6,7 @@ import 'package:frontend/services/api_service.dart';
 import 'package:frontend/services/local_storage_service.dart';
 import 'package:go_router/go_router.dart';
 
+import '../services/comment_service.dart';
 import '../services/post_service.dart';
 import '../services/profile_picture_service.dart';
 import '../services/user_service.dart';
@@ -17,6 +18,7 @@ final apiService = ApiService(localStorage);
 final userService = UserService(apiService);
 final profilePictureService = ProfilePictureService(apiService);
 final postService = PostService(apiService);
+final commentService = CommentService(apiService);
 
 final GoRouter router = GoRouter(
   navigatorKey: rootNavigatorKey,
@@ -27,7 +29,8 @@ final GoRouter router = GoRouter(
       builder: (context , state) => ProfileScreen(
           userService: userService,
           profilePictureService: profilePictureService,
-          postService: postService
+          postService: postService,
+          commentService: commentService,
       ),
     ),
     //todo add routes here ^^

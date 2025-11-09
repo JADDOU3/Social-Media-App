@@ -51,7 +51,7 @@ class CommentItem extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          comment.userName ?? comment.userEmail,
+                          comment.authorName ?? comment.authorEmail,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
@@ -86,6 +86,16 @@ class CommentItem extends StatelessWidget {
                       color: isDark
                           ? AppColors.darkTextPrimary
                           : AppColors.lightTextPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    DateFormatter.formatDate(comment.commentDate),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark
+                          ? AppColors.darkTextLight
+                          : AppColors.lightTextLight,
                     ),
                   ),
                 ],

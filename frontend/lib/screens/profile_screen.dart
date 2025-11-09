@@ -238,13 +238,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           profilePicture: _profilePicture,
           currentUserEmail: _profile?.email ?? '',
           commentService: widget.commentService,
+          postService: widget.postService,
           onReactionSelected: (reaction) => _handleReaction(post, reaction),
-          onCommentPressed: () {
-            // TODO: Navigate to comments
-          },
-          onMorePressed: () {
-            // TODO: Show more options
-          },
+          onPostUpdated: _loadProfileData,
+          onPostDeleted: _loadProfileData,
         );
       },
     );

@@ -65,6 +65,7 @@ class _CommentSectionState extends State<CommentSection> {
         _error = e.toString();
         _isLoading = false;
       });
+      print('Error loading comments: $e');
     }
   }
 
@@ -192,12 +193,21 @@ class _CommentSectionState extends State<CommentSection> {
           else if (_error != null)
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Text(
-                'Error loading comments',
-                style: TextStyle(
-                  color: AppColors.error,
-                  fontSize: 14,
-                ),
+              child: Column(
+                children: [
+                  Text(
+                    'Error loading comments: $_error',
+                    style: const TextStyle(
+                      color: AppColors.error,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: _loadComments,
+                    child: const Text('Retry'),
+                  ),
+                ],
               ),
             )
           else if (_comments.isEmpty)
@@ -221,7 +231,7 @@ class _CommentSectionState extends State<CommentSection> {
                 itemBuilder: (context, index) {
                   final comment = _comments[index];
                   final isOwnComment =
-                      comment.userEmail == widget.currentUserEmail;
+                      comment.authorEmail == widget.currentUserEmail;
 
                   return CommentItem(
                     comment: comment,
@@ -229,9 +239,7 @@ class _CommentSectionState extends State<CommentSection> {
                     isOwnComment: isOwnComment,
                     profilePicture:
                     isOwnComment ? widget.currentUserProfilePicture : null,
-                    onDelete: isOwnComment
-                        ? () => _deleteComment(comment)
-                        : null,
+                    onDelete: isOwnComment ? () => _deleteComment(comment) : null,
                   );
                 },
               ),

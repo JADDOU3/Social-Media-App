@@ -2,27 +2,30 @@ class Comment {
   final int id;
   final int postId;
   final String comment;
-  final String userEmail;
-  final String? userName;
-  final DateTime createdDate;
+  final String authorEmail;
+  final String? authorName;
+  final DateTime commentDate;
 
   Comment({
     required this.id,
     required this.postId,
     required this.comment,
-    required this.userEmail,
-    this.userName,
-    required this.createdDate,
+    required this.authorEmail,
+    this.authorName,
+    required this.commentDate,
   });
+
+  String get userEmail => authorEmail;
+  String? get userName => authorName;
 
   factory Comment.fromJson(Map<String, dynamic> json) {
     return Comment(
-      id: json['id'],
-      postId: json['postId'],
-      comment: json['comment'],
-      userEmail: json['userEmail'],
-      userName: json['userName'],
-      createdDate: DateTime.parse(json['createdDate']),
+      id: json['id'] as int,
+      postId: json['postId'] as int,
+      comment: json['comment'] as String,
+      authorEmail: json['authorEmail'] as String,
+      authorName: json['authorName'] as String?,
+      commentDate: DateTime.parse(json['commentDate'] as String),
     );
   }
 
@@ -31,26 +34,9 @@ class Comment {
       'id': id,
       'postId': postId,
       'comment': comment,
-      'userEmail': userEmail,
-      'userName': userName,
-      'createdDate': createdDate.toIso8601String(),
-    };
-  }
-}
-
-class CommentRequest {
-  final int postId;
-  final String comment;
-
-  CommentRequest({
-    required this.postId,
-    required this.comment,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'postId': postId,
-      'comment': comment,
+      'authorEmail': authorEmail,
+      'authorName': authorName,
+      'commentDate': commentDate.toIso8601String(),
     };
   }
 }

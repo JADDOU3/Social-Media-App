@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:frontend/screens/profile_screen.dart';
 import 'package:frontend/services/api_service.dart';
+import 'package:frontend/services/comment_service.dart';
 import 'package:frontend/services/local_storage_service.dart';
 import 'package:frontend/services/post_service.dart';
 import 'package:frontend/services/profile_picture_service.dart';
@@ -15,7 +16,7 @@ void main() async {
   final localStorageService = LocalStorageService(secureStorage);
 
   //for testing ...
-  await localStorageService.saveAccessToken("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0aW5nMUBnbWFpbC5jb20iLCJpYXQiOjE3NjI0MDk3NTYsImV4cCI6MTc2MzAxNDU1Nn0.IICDPS6zW7IDBrT4cNMdJn48PkZET4XCRsNRg8d5gcw");
+  await localStorageService.saveAccessToken("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqYWQxQGdtYWlsLmNvbSIsImlhdCI6MTc2MjYyMjk2MSwiZXhwIjoxNzYzMjI3NzYxfQ.JpmdDAdeeNqxfq89IJZyNYDFKDUKDAEjhayS8DO3Plc");
 
   runApp(const MyApp());
 }
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
     final userService = UserService(apiService);
     final profilePictureService = ProfilePictureService(apiService);
     final postService = PostService(apiService);
+    final commentService = CommentService(apiService);
 
     return MultiProvider(
       providers: [
@@ -40,6 +42,7 @@ class MyApp extends StatelessWidget {
         Provider<UserService>.value(value: userService),
         Provider<ProfilePictureService>.value(value: profilePictureService),
         Provider<PostService>.value(value: postService),
+        Provider<CommentService>.value(value: commentService),
       ],
       child: const SocialMediaApp(),
     );
@@ -55,6 +58,7 @@ class SocialMediaApp extends StatelessWidget {
     final userService = Provider.of<UserService>(context);
     final profilePictureService = Provider.of<ProfilePictureService>(context);
     final postService = Provider.of<PostService>(context);
+    final commentService = Provider.of<CommentService>(context);
 
     return MaterialApp(
       title: 'Social Media Profile',
@@ -66,6 +70,7 @@ class SocialMediaApp extends StatelessWidget {
         userService: userService,
         profilePictureService: profilePictureService,
         postService: postService,
+        commentService: commentService,
       ),
     );
   }
