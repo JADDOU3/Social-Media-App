@@ -1,11 +1,13 @@
 package org.example.socialmediaapp.services;
 
+import org.example.socialmediaapp.dto.FriendResponse;
 import org.example.socialmediaapp.dto.PostRequest;
 import org.example.socialmediaapp.dto.PostResponse;
 import org.example.socialmediaapp.entities.Post;
 import org.example.socialmediaapp.entities.PostImage;
 import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.repositories.*;
+import org.example.socialmediaapp.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +37,10 @@ public class PostService {
 
     @Autowired
     private PostReactionRepo postReactionRepo;
+
+    @Autowired
+    private FriendService friendService;
+
 
     @Transactional
     public PostResponse createPost(User user , PostRequest postRequest) throws IOException {
@@ -75,11 +82,31 @@ public class PostService {
     }
 
     public List<PostResponse> getAllPosts() {
-        return postRepo.findAllByDeletedFalse()
+        User currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        List<FriendResponse> friendResponses = friendService.getAllFriends(currentUser.getId());
+
+        List<User> allowedAuthors = friendResponses.stream()
+                .map(f -> {
+                    int friendId = f.getSenderId() == currentUser.getId()
+                            ? f.getReceiverId()
+                            : f.getSenderId();
+                    return userRepo.findById(friendId).orElse(null);
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        allowedAuthors.add(currentUser);
+
+        return postRepo.findAllByAuthorInAndDeletedFalse(allowedAuthors)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
+
 
     public List<PostResponse> getMyPosts(String email) {
         return postRepo.findAllByAuthor_emailAndDeletedFalse(email)

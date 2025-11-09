@@ -27,19 +27,24 @@ public class PostCommentService {
     private PostCommentRepo postCommentRepo;
 
     @Transactional
-    public CommentResponse addComment(String email,int postId,String commentText) {
-        User user = userRepo.findByEmail(email).orElseThrow(()->new RuntimeException("User not found"));
-        Post post = postRepo.findById(postId).orElseThrow(()->new RuntimeException("Post not found"));
+    public CommentResponse addComment(String email, int postId, String commentText) {
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Post post = postRepo.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
         PostComment postComment = new PostComment();
         postComment.setPost(post);
         postComment.setComment(commentText);
         postComment.setAuthor(user);
         postComment.setCreatedDate(LocalDateTime.now());
-        PostComment saved=postCommentRepo.save(postComment);
+
+        PostComment saved = postCommentRepo.save(postComment);
         postRepo.save(post);
 
         return toResponse(saved);
     }
+
 
     public CommentResponse toResponse(PostComment postComment) {
         CommentResponse commentResponse = new CommentResponse();
@@ -65,5 +70,30 @@ public class PostCommentService {
         postCommentRepo.delete(commentToDelete);
         postRepo.save(post);
     }
+
+    @Transactional
+    public CommentResponse updateComment(String email, int commentId, CommentRequest request) {
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        PostComment comment = postCommentRepo.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        if (!(comment.getAuthor().getId()==user.getId())) {
+            throw new RuntimeException("You can only edit your own comments.");
+        }
+
+        if (request.getComment() == null || request.getComment().trim().isEmpty()) {
+            throw new RuntimeException("Comment text cannot be empty.");
+        }
+
+        comment.setComment(request.getComment());
+        comment.setCreatedDate(LocalDateTime.now());
+
+        PostComment updated = postCommentRepo.save(comment);
+        return toResponse(updated);
+    }
+
+
 }
 
