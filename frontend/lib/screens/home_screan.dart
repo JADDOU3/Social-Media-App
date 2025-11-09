@@ -18,6 +18,11 @@ class HomeScreen extends StatelessWidget {
         title: const Text('Home'),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.people_outline),
+            onPressed: () => context.go(AppRoutes.friends),
+            tooltip: 'Friends',
+          ),
           Builder(
             builder: (context) => PopupMenuButton<String>(
               icon: const Icon(Icons.settings_outlined),
@@ -32,8 +37,10 @@ class HomeScreen extends StatelessWidget {
                   themeProvider.toggleTheme();
                 } else if (value == 'profile') {
                   context.go(AppRoutes.profile);
+                } else if (value == 'friends') {
+                  context.go(AppRoutes.friends);
                 } else if (value == 'blocked') {
-                  _navigateToBlockedList(context);
+                  context.go(AppRoutes.blocked);
                 } else if (value == 'logout') {
                   _showLogoutConfirmation(context, isDark);
                 }
@@ -76,6 +83,29 @@ class HomeScreen extends StatelessWidget {
                       const SizedBox(width: 12),
                       Text(
                         'Profile',
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.lightTextPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'friends',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.people_outline,
+                        size: 20,
+                        color: isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.lightTextPrimary,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Friends',
                         style: TextStyle(
                           color: isDark
                               ? AppColors.darkTextPrimary
@@ -165,35 +195,47 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 48),
-              ElevatedButton.icon(
-                onPressed: () {
-                  context.go(AppRoutes.profile);
-                },
-                icon: const Icon(Icons.person),
-                label: const Text('Go to Profile'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () => context.go(AppRoutes.profile),
+                    icon: const Icon(Icons.person),
+                    label: const Text('Profile'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  const SizedBox(width: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => context.go(AppRoutes.friends),
+                    icon: const Icon(Icons.people),
+                    label: const Text('Friends'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.success,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _navigateToBlockedList(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Blocked list coming soon...'),
       ),
     );
   }

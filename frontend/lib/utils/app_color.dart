@@ -25,8 +25,10 @@ class AppColors {
   static const Color darkShimmer = Color(0xFF2C2C2C);
 
   // Common colors
-  static const Color success = Color(0xFF4CAF50);
-  static const Color error = Color(0xFFF44336);
+  static const Color success = Color(0xFF00B894);
+  static const Color error = Color(0xFFD63031);
+  static const Color warning = Color(0xFFFDCB6E);
+  static const Color info = Color(0xFF0984E3);
 
   // Reaction Colors
   static const Color reactionLike = Color(0xFF2196F3);
