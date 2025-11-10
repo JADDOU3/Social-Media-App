@@ -43,7 +43,24 @@ final GoRouter router = GoRouter(
         profilePictureService: profilePictureService,
         postService: postService,
         commentService: commentService,
+        friendService: friendService,
       ),
+    ),
+    GoRoute(
+      path: '${AppRoutes.profile}/:userId',
+      builder: (context, state) {
+        final userIdParam = state.pathParameters['userId'];
+        final userId = userIdParam != null ? int.tryParse(userIdParam) : null;
+
+        return ProfileScreen(
+          userService: userService,
+          profilePictureService: profilePictureService,
+          postService: postService,
+          commentService: commentService,
+          friendService: friendService,
+          userId: userId,
+        );
+      },
     ),
     GoRoute(
       path: AppRoutes.friends,
@@ -57,6 +74,5 @@ final GoRouter router = GoRouter(
         friendService: friendService,
       ),
     ),
-    // TODO: Add more routes here
   ],
 );

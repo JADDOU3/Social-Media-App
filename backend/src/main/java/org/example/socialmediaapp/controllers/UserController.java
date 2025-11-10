@@ -110,5 +110,31 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    @GetMapping("/profile/{userId}")
+    public ResponseEntity<ProfileResponse> getUserProfile(@PathVariable int userId) {
+        User user = userService.findById(userId);
+        if (user == null) {
+            return ResponseEntity.status(404).body(null);
+        }
+
+        User currentUser = SecurityUtils.getCurrentUser();
+        String email = (currentUser != null && currentUser.getId() == userId)
+                ? user.getEmail()
+                : null;
+
+        ProfileResponse response = new ProfileResponse(
+                user.getName(),
+                email,
+                user.getJob(),
+                user.getLocation(),
+                user.getGender(),
+                user.getPhoneNumber(),
+                user.getDateOfBirth(),
+                user.getSocialSituation(),
+                user.getBio()
+        );
+        return ResponseEntity.ok(response);
+    }
+
 
 }

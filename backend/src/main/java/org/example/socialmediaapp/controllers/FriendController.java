@@ -4,6 +4,7 @@ package org.example.socialmediaapp.controllers;
 import lombok.RequiredArgsConstructor;
 import org.example.socialmediaapp.dto.FriendRequest;
 import org.example.socialmediaapp.dto.FriendResponse;
+import org.example.socialmediaapp.dto.FriendStatusResponse;
 import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.services.FriendService;
 import org.example.socialmediaapp.utils.SecurityUtils;
@@ -97,4 +98,14 @@ public class FriendController {
         return ResponseEntity.ok("Friend request cancelled.");
     }
 
+    @GetMapping("/status/{userId}")
+    public ResponseEntity<FriendStatusResponse> getFriendStatus(@PathVariable int userId) {
+        User currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        FriendStatusResponse status = friendService.getFriendStatus(currentUser.getId(), userId);
+        return ResponseEntity.ok(status);
+    }
 }

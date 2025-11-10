@@ -110,4 +110,14 @@ class PostService {
       throw Exception('Failed to react to post: $e');
     }
   }
+
+  Future<List<Post>> getUserPosts(int userId) async {
+    try {
+      final response = await _apiService.get('posts/user/$userId');
+      List<dynamic> postsJson = response;
+      return postsJson.map((json) => Post.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Failed to load user posts: $e');
+    }
+  }
 }

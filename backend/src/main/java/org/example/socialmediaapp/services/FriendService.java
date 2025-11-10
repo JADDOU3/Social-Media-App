@@ -5,6 +5,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.socialmediaapp.dto.FriendRequest;
 import org.example.socialmediaapp.dto.FriendResponse;
+import org.example.socialmediaapp.dto.FriendStatusResponse;
 import org.example.socialmediaapp.entities.Friend;
 import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.repositories.FriendRepo;
@@ -171,6 +172,77 @@ public class FriendService {
         List<User> users = extractUsers(allFriends);
         users.removeIf(user1 -> user1.getId() == user.getId());
         return users;
+    }
+
+    public boolean areFriends(int userId1, int userId2) {
+        User user1 = userRepo.findById(userId1).orElse(null);
+        User user2 = userRepo.findById(userId2).orElse(null);
+
+        if (user1 == null || user2 == null) {
+            return false;
+        }
+        Optional<Friend> friendship1 = friendRepo.findByUser1AndUser2(user1, user2);
+        Optional<Friend> friendship2 = friendRepo.findByUser1AndUser2(user2, user1);
+
+        if (friendship1.isPresent()) {
+            Friend f = friendship1.get();
+            return f.getRequestStatus() == RequestStatus.APPROVED && !f.isBlocked();
+        }
+
+        if (friendship2.isPresent()) {
+            Friend f = friendship2.get();
+            return f.getRequestStatus() == RequestStatus.APPROVED && !f.isBlocked();
+        }
+
+        return false;
+    }
+
+    public FriendStatusResponse getFriendStatus(int currentUserId, int targetUserId) {
+        if (currentUserId == targetUserId) {
+            return new FriendStatusResponse("SELF", null);
+        }
+
+        User currentUser = userRepo.findById(currentUserId).orElseThrow(() -> new RuntimeException("Current user not found"));
+        User targetUser = userRepo.findById(targetUserId).orElseThrow(() -> new RuntimeException("Target user not found"));
+
+        Optional<Friend> friendship1 = friendRepo.findByUser1AndUser2(currentUser, targetUser);
+        Optional<Friend> friendship2 = friendRepo.findByUser1AndUser2(targetUser, currentUser);
+
+        Friend friendship = null;
+        boolean currentUserIsSender = false;
+
+        if (friendship1.isPresent()) {
+            friendship = friendship1.get();
+            currentUserIsSender = true;
+        } else if (friendship2.isPresent()) {
+            friendship = friendship2.get();
+            currentUserIsSender = false;
+        }
+
+        if (friendship == null) {
+            return new FriendStatusResponse("NONE", null);
+        }
+
+        if (friendship.isBlocked()) {
+            return new FriendStatusResponse("BLOCKED", friendship.getId());
+        }
+
+        switch (friendship.getRequestStatus()) {
+            case APPROVED:
+                return new FriendStatusResponse("FRIENDS", friendship.getId());
+            case REQUESTED:
+                if (currentUserIsSender) {
+                    return new FriendStatusResponse("PENDING_SENT", friendship.getId());
+                } else {
+                    return new FriendStatusResponse("PENDING_RECEIVED", friendship.getId());
+                }
+            case DECLINED:
+            case CANCELLED:
+            case REMOVED:
+                return new FriendStatusResponse("NONE", null);
+            default:
+                return new FriendStatusResponse("NONE", null);
+        }
     }
 
     private List<User> extractUsers(List<Friend> friends){

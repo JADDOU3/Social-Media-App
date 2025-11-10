@@ -1,6 +1,7 @@
 // services/friend_service.dart
 import '../models/friend_request.dart';
 import '../models/friend_response.dart';
+import '../models/friend_status.dart';
 import '../models/user_search_result.dart';
 import 'api_service.dart';
 
@@ -77,4 +78,10 @@ class FriendService {
   Future<void> cancelFriendRequest(int friendshipId) async {
     await _apiService.patch('/friends/$friendshipId/cancel', data: {});
   }
+
+  Future<FriendStatus> getFriendStatus(int userId) async {
+    final response = await _apiService.get('/friends/status/$userId');
+    return FriendStatus.fromJson(response);
+  }
+
 }

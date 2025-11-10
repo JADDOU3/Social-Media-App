@@ -373,61 +373,86 @@ class _FriendsScreenState extends State<FriendsScreen>
   Widget _buildUserCard(UserSearchResult user, bool isDark) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color:
-      isDark ? AppColors.darkCardBackground : AppColors.lightCardBackground,
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: AppColors.primary,
-          child: Text(
-            user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-            style: const TextStyle(color: Colors.white),
-          ),
-        ),
-        title: Text(
-          user.name,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: isDark
-                ? AppColors.darkTextPrimary
-                : AppColors.lightTextPrimary,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              user.email,
-              style: TextStyle(
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
-              ),
-            ),
-            if (user.bio != null && user.bio!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4.0),
-                child: Text(
-                  user.bio!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary,
+      color: isDark ? AppColors.darkCardBackground : AppColors.lightCardBackground,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () {
+          context.go('${AppRoutes.profile}/${user.id}');
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              Hero(
+                tag: 'user_${user.id}',
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundColor: AppColors.primary,
+                  child: Text(
+                    user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-          ],
-        ),
-        trailing: ElevatedButton.icon(
-          onPressed: () => _sendFriendRequest(user.id),
-          icon: const Icon(Icons.person_add, size: 18),
-          label: const Text('Add'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.name,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user.email,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      ),
+                    ),
+                    if (user.bio != null && user.bio!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        user.bio!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () {
+                  _sendFriendRequest(user.id);
+                },
+                icon: const Icon(Icons.person_add, size: 18),
+                label: const Text('Add'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -458,66 +483,93 @@ class _FriendsScreenState extends State<FriendsScreen>
   Widget _buildFriendCard(FriendResponse friend, bool isDark) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color:
-      isDark ? AppColors.darkCardBackground : AppColors.lightCardBackground,
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: AppColors.primary,
-          child: Text(
-            friend.receiverName.isNotEmpty
-                ? friend.receiverName[0].toUpperCase()
-                : '?',
-            style: const TextStyle(color: Colors.white),
-          ),
-        ),
-        title: Text(
-          friend.receiverName,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: isDark
-                ? AppColors.darkTextPrimary
-                : AppColors.lightTextPrimary,
-          ),
-        ),
-        subtitle: Text(
-          friend.receiverEmail,
-          style: TextStyle(
-            color: isDark
-                ? AppColors.darkTextSecondary
-                : AppColors.lightTextSecondary,
-          ),
-        ),
-        trailing: PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          onSelected: (value) {
-            if (value == 'remove') {
-              _removeFriend(friend.id, friend.receiverName);
-            } else if (value == 'block') {
-              _blockUser(friend.id, friend.receiverName);
-            }
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'remove',
-              child: Row(
-                children: [
-                  Icon(Icons.person_remove, size: 20, color: Colors.orange),
-                  SizedBox(width: 12),
-                  Text('Remove Friend'),
+      color: isDark ? AppColors.darkCardBackground : AppColors.lightCardBackground,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () {
+          context.go('${AppRoutes.profile}/${friend.receiverId}');
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              Hero(
+                tag: 'user_${friend.receiverId}',
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundColor: AppColors.primary,
+                  child: Text(
+                    friend.receiverName.isNotEmpty ? friend.receiverName[0].toUpperCase() : '?',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      friend.receiverName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      friend.receiverEmail,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuButton<String>(
+                icon: Icon(
+                  Icons.more_vert,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                ),
+                onSelected: (value) {
+                  if (value == 'remove') {
+                    _removeFriend(friend.id, friend.receiverName);
+                  } else if (value == 'block') {
+                    _blockUser(friend.id, friend.receiverName);
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'remove',
+                    child: Row(
+                      children: [
+                        Icon(Icons.person_remove, size: 20, color: Colors.orange),
+                        SizedBox(width: 12),
+                        Text('Remove Friend'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'block',
+                    child: Row(
+                      children: [
+                        Icon(Icons.block, size: 20, color: Colors.red),
+                        SizedBox(width: 12),
+                        Text('Block User'),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-            ),
-            const PopupMenuItem(
-              value: 'block',
-              child: Row(
-                children: [
-                  Icon(Icons.block, size: 20, color: Colors.red),
-                  SizedBox(width: 12),
-                  Text('Block User'),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -547,82 +599,99 @@ class _FriendsScreenState extends State<FriendsScreen>
   Widget _buildReceivedRequestCard(FriendResponse request, bool isDark) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color:
-      isDark ? AppColors.darkCardBackground : AppColors.lightCardBackground,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: AppColors.primary,
-                  child: Text(
-                    request.senderName.isNotEmpty
-                        ? request.senderName[0].toUpperCase()
-                        : '?',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        request.senderName,
-                        style: TextStyle(
+      color: isDark ? AppColors.darkCardBackground : AppColors.lightCardBackground,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () {
+          context.go('${AppRoutes.profile}/${request.senderId}');
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Hero(
+                    tag: 'user_${request.senderId}',
+                    child: CircleAvatar(
+                      radius: 30,
+                      backgroundColor: AppColors.primary,
+                      child: Text(
+                        request.senderName.isNotEmpty ? request.senderName[0].toUpperCase() : '?',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: isDark
-                              ? AppColors.darkTextPrimary
-                              : AppColors.lightTextPrimary,
                         ),
                       ),
-                      Text(
-                        request.senderEmail,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isDark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.lightTextSecondary,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          request.senderName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          request.senderEmail,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _approveFriendRequest(request.id),
+                      icon: const Icon(Icons.check, size: 18),
+                      label: const Text('Accept'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.success,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _approveFriendRequest(request.id),
-                    icon: const Icon(Icons.check, size: 18),
-                    label: const Text('Accept'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.success,
-                      foregroundColor: Colors.white,
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _declineFriendRequest(request.id),
-                    icon: const Icon(Icons.close, size: 18),
-                    label: const Text('Decline'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _declineFriendRequest(request.id),
+                      icon: const Icon(Icons.close, size: 18),
+                      label: const Text('Decline'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                        side: const BorderSide(color: AppColors.error),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -652,54 +721,85 @@ class _FriendsScreenState extends State<FriendsScreen>
   Widget _buildSentRequestCard(FriendResponse request, bool isDark) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color:
-      isDark ? AppColors.darkCardBackground : AppColors.lightCardBackground,
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: AppColors.primary,
-          child: Text(
-            request.receiverName.isNotEmpty
-                ? request.receiverName[0].toUpperCase()
-                : '?',
-            style: const TextStyle(color: Colors.white),
-          ),
-        ),
-        title: Text(
-          request.receiverName,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: isDark
-                ? AppColors.darkTextPrimary
-                : AppColors.lightTextPrimary,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              request.receiverEmail,
-              style: TextStyle(
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
+      color: isDark ? AppColors.darkCardBackground : AppColors.lightCardBackground,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () {
+          context.go('${AppRoutes.profile}/${request.receiverId}');
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              Hero(
+                tag: 'user_${request.receiverId}',
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundColor: AppColors.primary,
+                  child: Text(
+                    request.receiverName.isNotEmpty ? request.receiverName[0].toUpperCase() : '?',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Pending',
-              style: TextStyle(
-                color: Colors.orange,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      request.receiverName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      request.receiverEmail,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.orange.withOpacity(0.5)),
+                      ),
+                      child: const Text(
+                        'Pending',
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-        trailing: TextButton(
-          onPressed: () => _cancelFriendRequest(request.id),
-          child: const Text(
-            'Cancel',
-            style: TextStyle(color: AppColors.error),
+              TextButton(
+                onPressed: () => _cancelFriendRequest(request.id),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -718,18 +818,14 @@ class _FriendsScreenState extends State<FriendsScreen>
           Icon(
             icon,
             size: 64,
-            color: isDark
-                ? AppColors.darkTextSecondary
-                : AppColors.lightTextSecondary,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
           ),
           const SizedBox(height: 16),
           Text(
             message,
             style: TextStyle(
               fontSize: 16,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
             ),
           ),
         ],
