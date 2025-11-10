@@ -102,4 +102,10 @@ public class PostsController {
         postReactionService.reactToPost(postId, user, reactionType);
         return ResponseEntity.ok("Reaction updated.");
     }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable int userId) {
+        List<PostResponse> posts = postService.getUserPosts(userId);
+        return ResponseEntity.ok(posts);
+    }
 }

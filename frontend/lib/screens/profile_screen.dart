@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/post.dart';
 import '../models/user_profile.dart';
+import '../models/friend_status.dart';
 import '../routes/app_router.dart';
 import '../services/post_service.dart';
 import '../services/profile_picture_service.dart';
 import '../services/user_service.dart';
 import '../services/comment_service.dart';
+import '../services/friend_service.dart';
 import '../utils/app_color.dart';
 import '../utils/theme_provider.dart';
 import '../widgets/profile_header.dart';
@@ -21,6 +23,8 @@ class ProfileScreen extends StatefulWidget {
   final ProfilePictureService profilePictureService;
   final PostService postService;
   final CommentService commentService;
+  final FriendService friendService;
+  final int? userId;
 
   const ProfileScreen({
     Key? key,
@@ -28,6 +32,8 @@ class ProfileScreen extends StatefulWidget {
     required this.profilePictureService,
     required this.postService,
     required this.commentService,
+    required this.friendService,
+    this.userId,
   }) : super(key: key);
 
   @override
@@ -38,12 +44,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   UserProfile? _profile;
   List<Post> _posts = [];
   Uint8List? _profilePicture;
+  FriendStatus? _friendStatus;
   bool _isLoading = true;
   String? _error;
+  bool _isOwnProfile = false;
 
   @override
   void initState() {
     super.initState();
+    _isOwnProfile = widget.userId == null;
     _loadProfileData();
   }
 
@@ -54,23 +63,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
     try {
-      final results = await Future.wait([
-        widget.userService.getProfile(),
-        widget.postService.getMyPosts(),
-        widget.profilePictureService.getProfilePicture(),
-      ]);
+      List<Future> futures = [
+        widget.userId != null
+            ? widget.userService.getUserProfile(widget.userId!)
+            : widget.userService.getProfile(),
+        widget.userId != null
+            ? widget.postService.getUserPosts(widget.userId!)
+            : widget.postService.getMyPosts(),
+        widget.profilePictureService.getUserProfilePicture(widget.userId),
+
+      ];
+
+      if (widget.userId != null) {
+        futures.add(widget.friendService.getFriendStatus(widget.userId!));
+      }
+
+      final results = await Future.wait(futures);
 
       setState(() {
         _profile = results[0] as UserProfile;
         _posts = results[1] as List<Post>;
         _profilePicture = results[2] as Uint8List?;
+        if (widget.userId != null) {
+          _friendStatus = results[3] as FriendStatus;
+        }
         _isLoading = false;
       });
     } catch (e) {
+      print('Error loading profile data: $e');
       setState(() {
         _error = e.toString();
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _sendFriendRequest() async {
+    try {
+      await widget.friendService.sendFriendRequest(widget.userId!);
+      _loadProfileData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Friend request sent')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send friend request: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _cancelFriendRequest() async {
+    if (_friendStatus?.requestId == null) return;
+
+    try {
+      await widget.friendService.cancelFriendRequest(_friendStatus!.requestId!);
+      _loadProfileData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Friend request cancelled')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to cancel request: $e')),
+        );
+      }
     }
   }
 
@@ -85,7 +147,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _handleReaction(Post post, ReactionType reaction) {
-    // TODO: Call your API to add reaction
     print('Post ${post.id}: Selected reaction: ${reaction.name}');
   }
 
@@ -98,7 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            icon: const Icon(Icons.home_outlined),
+            icon: const Icon(Icons.arrow_back),
             onPressed: () {
               context.go(AppRoutes.home);
             },
@@ -114,7 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            icon: const Icon(Icons.home_outlined),
+            icon: const Icon(Icons.arrow_back),
             onPressed: () {
               context.go(AppRoutes.home);
             },
@@ -141,14 +202,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.home_outlined),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             context.go(AppRoutes.home);
           },
         ),
         title: const Text('Profile'),
         centerTitle: true,
-        actions: [
+        actions: _isOwnProfile
+            ? [
           PopupMenuButton<String>(
             icon: const Icon(Icons.settings_outlined),
             color: isDark
@@ -233,7 +295,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-        ],
+        ]
+            : null,
       ),
       body: RefreshIndicator(
         onRefresh: _loadProfileData,
@@ -246,13 +309,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 profilePicture: _profilePicture,
                 postCount: _posts.length,
                 isDark: isDark,
-                onEditProfile: () {
+                isOwnProfile: _isOwnProfile,
+                friendStatus: _friendStatus,
+                onEditProfile: _isOwnProfile
+                    ? () {
                   // TODO: Navigate to edit profile screen
-                },
-                onCreatePost: _showCreatePostDialog,
-                onChangeProfilePicture: () {
+                }
+                    : null,
+                onCreatePost: _isOwnProfile ? _showCreatePostDialog : null,
+                onChangeProfilePicture: _isOwnProfile
+                    ? () {
                   // TODO: Implement profile picture change
-                },
+                }
+                    : null,
+                onSendFriendRequest:
+                !_isOwnProfile && _friendStatus?.isNone == true
+                    ? _sendFriendRequest
+                    : null,
+                onCancelFriendRequest:
+                !_isOwnProfile && _friendStatus?.isPendingSent == true
+                    ? _cancelFriendRequest
+                    : null,
               ),
               const SizedBox(height: 12),
               _buildPostsSection(isDark),
@@ -264,19 +341,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _navigateToBlockedList() {
-    // TODO: Navigate to blocked list screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Blocked list coming soon...'),
-      ),
-    );
+    context.go(AppRoutes.blocked);
   }
 
   void _showLogoutConfirmation() {
     showDialog(
       context: context,
       builder: (dialogContext) {
-        final isDark = Provider.of<ThemeProvider>(context, listen: false).isDarkMode;
+        final isDark =
+            Provider.of<ThemeProvider>(context, listen: false).isDarkMode;
 
         return AlertDialog(
           backgroundColor: isDark
@@ -313,13 +386,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextButton(
               onPressed: () async {
                 Navigator.pop(dialogContext);
-
-                // TODO: Clear tokens - uncomment when you have access to localStorage
-                // await localStorage.clearTokens();
-
                 if (context.mounted) {
-                  // TODO: Navigate to login screen when you have that route
-                  // context.go('/login');
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Logged out successfully'),
@@ -339,6 +406,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildPostsSection(bool isDark) {
+    bool canViewPosts = _isOwnProfile || _friendStatus?.isFriends == true;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -357,10 +426,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
-          _posts.isEmpty
-              ? _buildEmptyState(isDark)
-              : _buildPostsList(isDark),
+          if (!canViewPosts)
+            _buildPrivateProfileMessage(isDark)
+          else if (_posts.isEmpty)
+            _buildEmptyState(isDark)
+          else
+            _buildPostsList(isDark),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPrivateProfileMessage(bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          children: [
+            Icon(
+              Icons.lock_outline,
+              size: 64,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'This profile is private',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isDark
+                    ? AppColors.darkTextPrimary
+                    : AppColors.lightTextPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Add them as a friend to see their posts',
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

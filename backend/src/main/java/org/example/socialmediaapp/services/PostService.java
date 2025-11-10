@@ -170,4 +170,24 @@ public class PostService {
     }
 
 
+    public List<PostResponse> getUserPosts(int userId) {
+        User currentUser = SecurityUtils.getCurrentUser();
+        User targetUser = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (currentUser != null && currentUser.getId() == userId) {
+            return postRepo.findByAuthor_IdAndDeletedFalse(userId)
+                    .stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        }
+
+        if (currentUser != null && friendService.areFriends(currentUser.getId(), userId)) {
+            return postRepo.findByAuthor_IdAndDeletedFalse(userId)
+                    .stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        }
+
+        return List.of();
+    }
 }

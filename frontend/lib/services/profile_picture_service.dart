@@ -16,6 +16,18 @@ class ProfilePictureService {
     }
   }
 
+  Future<Uint8List?> getUserProfilePicture([int? userId]) async {
+    try {
+      final endpoint = userId != null
+          ? 'profilepicture/$userId'
+          : 'profilepicture/';
+      final response = await _apiService.getBytes(endpoint);
+      return response;
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<void> uploadProfilePicture(Uint8List imageBytes, String filename) async {
     try {
       final formData = FormData.fromMap({
@@ -53,4 +65,6 @@ class ProfilePictureService {
       throw Exception('Failed to delete profile picture: $e');
     }
   }
+
+
 }

@@ -134,4 +134,7 @@ public class UserService implements UserDetailsService {
         return EMAIL_PATTERN.matcher(email).matches();
     }
 
+    public User findById(int userId) {
+        return userRepo.findById(userId).orElseThrow(() -> new IllegalStateException("User with ID " + userId + " not found"));
+    }
 }
