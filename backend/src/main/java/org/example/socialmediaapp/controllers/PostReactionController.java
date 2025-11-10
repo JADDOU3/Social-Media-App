@@ -36,5 +36,6 @@ public class PostReactionController {
         System.out.println("Incoming reaction request: postId=" + user.getEmail()) ;
         Map<ReactionType, Integer> counts = postReactionService.getReactionsByPost(postId, user);
         return ResponseEntity.ok(counts);
+
     }
 }

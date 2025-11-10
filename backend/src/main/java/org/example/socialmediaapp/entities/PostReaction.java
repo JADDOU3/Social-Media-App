@@ -30,4 +30,5 @@ public class PostReaction {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ReactionType type;
+
 }

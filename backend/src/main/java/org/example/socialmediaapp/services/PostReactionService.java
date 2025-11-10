@@ -53,8 +53,6 @@ public class PostReactionService {
         Post post = postRepo.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        System.out.println("Reacting to post: postId=" + postId + ", user=" + user.getEmail() + ", reaction=" + reactionType);
-
         if (!canInteractWithPost(user, post)) {
             throw new RuntimeException("You can only react to your friends' posts or your own posts.");
         }

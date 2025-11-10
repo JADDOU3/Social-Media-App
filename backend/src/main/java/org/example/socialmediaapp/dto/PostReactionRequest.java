@@ -11,4 +11,5 @@ import org.example.socialmediaapp.utils.enums.ReactionType;
 public class PostReactionRequest {
     private int postId;
     private ReactionType reactionType;
+
 }
