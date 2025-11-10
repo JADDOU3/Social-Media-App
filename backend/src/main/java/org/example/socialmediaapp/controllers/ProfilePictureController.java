@@ -3,6 +3,7 @@ package org.example.socialmediaapp.controllers;
 import org.example.socialmediaapp.entities.ProfilePicture;
 import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.services.ProfilePictureService;
+import org.example.socialmediaapp.services.UserService;
 import org.example.socialmediaapp.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -16,6 +17,9 @@ import java.io.IOException;
 public class ProfilePictureController {
     @Autowired
     private ProfilePictureService profilePictureService;
+
+    @Autowired
+    private UserService userService;
 
     @PostMapping("/")
     public ResponseEntity<ProfilePicture> uploadProfilePicture(@RequestParam("file") MultipartFile file) throws IOException {
@@ -48,5 +52,19 @@ public class ProfilePictureController {
         User user = SecurityUtils.getCurrentUser();
         profilePictureService.deleteProfilePicture(user.getEmail());
         return ResponseEntity.ok("Profile picture deleted successfully");
+    }
+    @GetMapping("/{userId}")
+    public ResponseEntity<byte[]> getUserProfilePicture(@PathVariable int userId) {
+        User user = userService.findById(userId);
+        if (user == null) return ResponseEntity.notFound().build();
+        try {
+            return profilePictureService.getProfilePicture(user.getEmail())
+                    .map(picture -> ResponseEntity.ok()
+                            .contentType(MediaType.valueOf(picture.getPictureType()))
+                            .body(picture.getImageData()))
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
