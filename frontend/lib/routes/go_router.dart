@@ -45,7 +45,12 @@ final GoRouter router = GoRouter(
 
     GoRoute(
       path: AppRoutes.home,
-      builder: (context, state) => const HomeScreen(),
+      builder: (context, state) =>  HomeScreen(
+        userService: userService,
+        profilePictureService: profilePictureService,
+        postService: postService,
+        commentService: commentService,
+      ),
     ),
     GoRoute(
       path: AppRoutes.profile,

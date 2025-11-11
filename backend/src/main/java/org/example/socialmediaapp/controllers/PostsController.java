@@ -108,4 +108,11 @@ public class PostsController {
         List<PostResponse> posts = postService.getUserPosts(userId);
         return ResponseEntity.ok(posts);
     }
+
+    @GetMapping("/friends")
+    public ResponseEntity<List<PostResponse>> getFriendsPosts() {
+        User user = SecurityUtils.getCurrentUser();
+        return ResponseEntity.ok(postService.getFriendsPosts(user.getId()));
+    }
+
 }

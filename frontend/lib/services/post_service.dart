@@ -18,6 +18,16 @@ class PostService {
     }
   }
 
+  Future<List<Post>> getFriendsPosts() async {
+    try {
+      final response = await _apiService.get('posts/friends');
+      List<dynamic> postsJson = response;
+      return postsJson.map((json) => Post.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Failed to load friends posts: $e');
+    }
+  }
+
   Future<List<Post>> getMyPosts() async {
     try {
       final response = await _apiService.get('posts/my');
@@ -33,7 +43,6 @@ class PostService {
     List<Uint8List>? images,
   }) async {
     try {
-      // Build form data with optional fields
       Map<String, dynamic> formDataMap = {};
 
       if (text != null && text.isNotEmpty) {

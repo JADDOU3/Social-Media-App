@@ -3,11 +3,13 @@ package org.example.socialmediaapp.services;
 import org.example.socialmediaapp.dto.FriendResponse;
 import org.example.socialmediaapp.dto.PostRequest;
 import org.example.socialmediaapp.dto.PostResponse;
+import org.example.socialmediaapp.entities.Friend;
 import org.example.socialmediaapp.entities.Post;
 import org.example.socialmediaapp.entities.PostImage;
 import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.repositories.*;
 import org.example.socialmediaapp.utils.SecurityUtils;
+import org.example.socialmediaapp.utils.enums.RequestStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,8 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +32,9 @@ public class PostService {
 
     @Autowired
     private PostImageRepo postImageRepo;
+
+    @Autowired
+    private FriendRepo friendRepo;
 
     @Autowired
     private PostCommentRepo postCommentRepo;
@@ -189,5 +193,64 @@ public class PostService {
         }
 
         return List.of();
+    }
+
+    public List<PostResponse> getFriendsPosts(int userId) {
+        User currentUser = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Friend> friendshipsAsUser1 = friendRepo.findByUser1AndRequestStatus(
+                currentUser, RequestStatus.APPROVED);
+        List<Friend> friendshipsAsUser2 = friendRepo.findByUser2AndRequestStatus(
+                currentUser, RequestStatus.APPROVED);
+
+        List<User> friends = new ArrayList<>();
+
+        for (Friend friendship : friendshipsAsUser1) {
+            if (!friendship.isBlocked()) {
+                friends.add(friendship.getUser2());
+            }
+        }
+
+        for (Friend friendship : friendshipsAsUser2) {
+            if (!friendship.isBlocked()) {
+                friends.add(friendship.getUser1());
+            }
+        }
+
+        if (friends.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Post> friendsPosts = postRepo.findAllByAuthorInAndDeletedFalse(friends);
+
+        friendsPosts.sort((p1, p2) -> p2.getCreatedDate().compareTo(p1.getCreatedDate()));
+
+        return friendsPosts.stream()
+                .map(this::convertToPostResponse)
+                .collect(Collectors.toList());
+    }
+
+    private PostResponse convertToPostResponse(Post post) {
+        PostResponse response = new PostResponse();
+        response.setId(post.getId());
+        response.setText(post.getText());
+        response.setAuthorEmail(post.getAuthor().getEmail());
+        response.setAuthorName(post.getAuthor().getName());
+        response.setCreatedDate(post.getCreatedDate());
+
+        if (post.getImages() != null && !post.getImages().isEmpty()) {
+            response.setImageCount(post.getImages().size());
+
+            List<String> imageUrls = post.getImages().stream()
+                    .map(image -> "/api/posts/" + post.getId() + "/images/" + image.getId())
+                    .collect(Collectors.toList());
+            response.setImageUrls(imageUrls);
+        } else {
+            response.setImageCount(0);
+            response.setImageUrls(Collections.emptyList());
+        }
+
+        return response;
     }
 }
