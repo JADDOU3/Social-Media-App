@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../routes/app_router.dart';
 import '../utils/app_color.dart';
 import '../utils/theme_provider.dart';
+import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -279,11 +280,7 @@ class HomeScreen extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 Navigator.pop(dialogContext);
-                // TODO: Clear tokens - uncomment when you have access to localStorage
-                // await localStorage.clearTokens();
                 if (context.mounted) {
-                  // TODO: Navigate to login screen when you have that route
-                  // context.go('/login');
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Logged out successfully'),
