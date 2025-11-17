@@ -12,7 +12,11 @@ class PostService {
     try {
       final response = await _apiService.get('posts');
       List<dynamic> postsJson = response;
-      return postsJson.map((json) => Post.fromJson(json)).toList();
+      final posts = postsJson.map((json) => Post.fromJson(json)).toList();
+
+      posts.sort((a, b) => b.createdDate.compareTo(a.createdDate));
+
+      return posts;
     } catch (e) {
       throw Exception('Failed to load posts: $e');
     }
@@ -22,7 +26,11 @@ class PostService {
     try {
       final response = await _apiService.get('posts/friends');
       List<dynamic> postsJson = response;
-      return postsJson.map((json) => Post.fromJson(json)).toList();
+      final posts = postsJson.map((json) => Post.fromJson(json)).toList();
+
+      posts.sort((a, b) => b.createdDate.compareTo(a.createdDate));
+
+      return posts;
     } catch (e) {
       throw Exception('Failed to load friends posts: $e');
     }
@@ -32,7 +40,10 @@ class PostService {
     try {
       final response = await _apiService.get('posts/my');
       List<dynamic> postsJson = response;
-      return postsJson.map((json) => Post.fromJson(json)).toList();
+      final posts = postsJson.map((json) => Post.fromJson(json)).toList();
+
+      posts.sort((a, b) => b.createdDate.compareTo(a.createdDate));
+      return posts;
     } catch (e) {
       throw Exception('Failed to load my posts: $e');
     }
@@ -116,7 +127,7 @@ class PostService {
         'posts/$postId/react?reactionType=$cleanReactionType',
         data: {},
       );
-    } catch (e) {
+      } catch (e) {
       throw Exception('Failed to react to post: $e');
     }
   }

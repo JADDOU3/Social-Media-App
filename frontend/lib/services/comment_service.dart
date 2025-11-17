@@ -29,7 +29,9 @@ class CommentService {
     try {
       final response = await _apiService.get('comments/post/$postId');
       final List<dynamic> jsonList = response as List<dynamic>;
-      return jsonList.map((json) => Comment.fromJson(json)).toList();
+      final comments = jsonList.map((json) => Comment.fromJson(json)).toList();
+      comments.sort((a, b) => b.commentDate.compareTo(a.commentDate));
+      return comments;
     } catch (e) {
       throw Exception('Failed to load comments: $e');
     }
