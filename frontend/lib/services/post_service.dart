@@ -111,9 +111,10 @@ class PostService {
 
   Future<void> reactToPost(int postId, String reactionType) async {
     try {
+      String cleanReactionType = reactionType.split('.').last.toUpperCase();
       await _apiService.post(
-        'posts/$postId/react',
-        data: {'reactionType': reactionType},
+        'posts/$postId/react?reactionType=$cleanReactionType',
+        data: {},
       );
     } catch (e) {
       throw Exception('Failed to react to post: $e');

@@ -425,7 +425,7 @@ class _PostCardState extends State<PostCard> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           ReactionButton(
-            currentReaction: null,
+            currentReaction: widget.post.currentReactionType,
             onReactionSelected: widget.onReactionSelected ?? (reaction) {},
             isDark: widget.isDark,
           ),

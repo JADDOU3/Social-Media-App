@@ -3,12 +3,10 @@ package org.example.socialmediaapp.services;
 import org.example.socialmediaapp.dto.FriendResponse;
 import org.example.socialmediaapp.dto.PostRequest;
 import org.example.socialmediaapp.dto.PostResponse;
-import org.example.socialmediaapp.entities.Friend;
-import org.example.socialmediaapp.entities.Post;
-import org.example.socialmediaapp.entities.PostImage;
-import org.example.socialmediaapp.entities.User;
+import org.example.socialmediaapp.entities.*;
 import org.example.socialmediaapp.repositories.*;
 import org.example.socialmediaapp.utils.SecurityUtils;
+import org.example.socialmediaapp.utils.enums.ReactionType;
 import org.example.socialmediaapp.utils.enums.RequestStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -153,6 +151,8 @@ public class PostService {
     }
 
     public PostResponse toResponse(Post post) {
+        User currentUser = SecurityUtils.getCurrentUser();
+
         PostResponse response = new PostResponse();
         response.setId(post.getId());
         response.setText(post.getText());
@@ -168,6 +168,20 @@ public class PostService {
                             .map(img -> baseUrl + "/api/posts/" + post.getId() + "/images/" + img.getId())
                             .collect(Collectors.toList())
             );
+        }
+
+        if (currentUser != null) {
+            Optional<PostReaction> userReaction = postReactionRepo.findByPostAndUser(post, currentUser);
+            userReaction.ifPresent(reaction -> response.setCurrentUserReaction(reaction.getType()));
+            List<PostReaction> reactions = postReactionRepo.findByPost(post);
+            Map<ReactionType, Integer> counts = new EnumMap<>(ReactionType.class);
+            for (ReactionType type : ReactionType.values()) {
+                counts.put(type, 0);
+            }
+            for (PostReaction r : reactions) {
+                counts.put(r.getType(), counts.get(r.getType()) + 1);
+            }
+            response.setReactionCounts(counts);
         }
 
         return response;
@@ -232,6 +246,8 @@ public class PostService {
     }
 
     private PostResponse convertToPostResponse(Post post) {
+        User currentUser = SecurityUtils.getCurrentUser();
+
         PostResponse response = new PostResponse();
         response.setId(post.getId());
         response.setText(post.getText());
@@ -251,6 +267,21 @@ public class PostService {
             response.setImageUrls(Collections.emptyList());
         }
 
+        if (currentUser != null) {
+            Optional<PostReaction> userReaction = postReactionRepo.findByPostAndUser(post, currentUser);
+            userReaction.ifPresent(reaction -> response.setCurrentUserReaction(reaction.getType()));
+            List<PostReaction> reactions = postReactionRepo.findByPost(post);
+            Map<ReactionType, Integer> counts = new EnumMap<>(ReactionType.class);
+            for (ReactionType type : ReactionType.values()) {
+                counts.put(type, 0);
+            }
+            for (PostReaction r : reactions) {
+                counts.put(r.getType(), counts.get(r.getType()) + 1);
+            }
+            response.setReactionCounts(counts);
+        }
+
         return response;
     }
+
 }

@@ -54,7 +54,7 @@ class _ReactionPickerState extends State<ReactionPicker>
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           decoration: BoxDecoration(
             color: widget.isDark
                 ? AppColors.darkCardBackground
@@ -78,6 +78,7 @@ class _ReactionPickerState extends State<ReactionPicker>
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: ReactionType.values.map((reaction) {
               return _ReactionButton(
                 reaction: reaction,
@@ -118,24 +119,18 @@ class _ReactionButtonState extends State<_ReactionButton> {
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          transform: Matrix4.identity()
-            ..scale(_isHovered ? 1.3 : 1.0)
-            ..translate(0.0, _isHovered ? -8.0 : 0.0),
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: _isHovered
-                  ? widget.reaction.color.withOpacity(0.1)
-                  : Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              widget.reaction.icon,
-              size: 26,
-              color: widget.reaction.color,
-            ),
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: _isHovered
+                ? widget.reaction.color.withOpacity(0.1)
+                : Colors.transparent,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            widget.reaction.icon,
+            size: 24,
+            color: widget.reaction.color,
           ),
         ),
       ),

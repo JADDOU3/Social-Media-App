@@ -22,7 +22,8 @@ class ReactionButton extends StatefulWidget {
 class _ReactionButtonState extends State<ReactionButton> {
   OverlayEntry? _overlayEntry;
   final LayerLink _layerLink = LayerLink();
-  bool _isHovering = false;
+  bool _isHoveringButton = false;
+  bool _isHoveringPicker = false;
 
   void _showReactionPicker() {
     if (_overlayEntry != null) return;
@@ -34,14 +35,23 @@ class _ReactionButtonState extends State<ReactionButton> {
           link: _layerLink,
           showWhenUnlinked: false,
           offset: const Offset(-20, -60),
-          child: Material(
-            color: Colors.transparent,
-            child: ReactionPicker(
-              onReactionSelected: (reaction) {
-                widget.onReactionSelected(reaction);
-                _hideReactionPicker();
-              },
-              isDark: widget.isDark,
+          child: MouseRegion(
+            onEnter: (_) {
+              setState(() => _isHoveringPicker = true);
+            },
+            onExit: (_) {
+              setState(() => _isHoveringPicker = false);
+              _scheduleHide();
+            },
+            child: Material(
+              color: Colors.transparent,
+              child: ReactionPicker(
+                onReactionSelected: (reaction) {
+                  widget.onReactionSelected(reaction);
+                  _hideReactionPicker();
+                },
+                isDark: widget.isDark,
+              ),
             ),
           ),
         ),
@@ -49,6 +59,14 @@ class _ReactionButtonState extends State<ReactionButton> {
     );
 
     Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _scheduleHide() {
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (!_isHoveringButton && !_isHoveringPicker) {
+        _hideReactionPicker();
+      }
+    });
   }
 
   void _hideReactionPicker() {
@@ -70,16 +88,12 @@ class _ReactionButtonState extends State<ReactionButton> {
       link: _layerLink,
       child: MouseRegion(
         onEnter: (_) {
-          setState(() => _isHovering = true);
+          setState(() => _isHoveringButton = true);
           _showReactionPicker();
         },
         onExit: (_) {
-          setState(() => _isHovering = false);
-          Future.delayed(const Duration(milliseconds: 300), () {
-            if (!_isHovering) {
-              _hideReactionPicker();
-            }
-          });
+          setState(() => _isHoveringButton = false);
+          _scheduleHide();
         },
         child: InkWell(
           onTap: () {

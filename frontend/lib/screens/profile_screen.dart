@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:frontend/routes/go_router.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/post.dart';
@@ -146,8 +147,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _handleReaction(Post post, ReactionType reaction) {
-    print('Post ${post.id}: Selected reaction: ${reaction.name}');
+  Future<void> _handleReaction(Post post, ReactionType reaction) async {
+    try {
+      setState(() {
+        final index = _posts.indexWhere((p) => p.id == post.id);
+        if (index != -1) {
+          _posts[index] = _posts[index].copyWith(
+            currentUserReaction: reaction.name.toUpperCase(),
+          );
+        }
+      });
+      await widget.postService.reactToPost(
+          post.id,
+          reaction.toString()
+      );
+
+    } catch (e) {
+      _loadProfileData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to react: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   @override

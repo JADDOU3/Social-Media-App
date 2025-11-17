@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/post.dart';
 import '../routes/app_router.dart';
+import '../routes/go_router.dart';
 import '../services/post_service.dart';
 import '../services/profile_picture_service.dart';
 import '../services/comment_service.dart';
@@ -19,7 +20,6 @@ class HomeScreen extends StatefulWidget {
   final ProfilePictureService profilePictureService;
   final CommentService commentService;
   final UserService userService;
-
   const HomeScreen({
     Key? key,
     required this.postService,
@@ -90,9 +90,29 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _handleReaction(Post post, ReactionType reaction) {
-    // TODO: Implement reaction functionality
-    print('Post ${post.id}: Selected reaction: ${reaction.name}');
+  Future<void> _handleReaction(Post post, ReactionType reaction) async {
+    try {
+      setState(() {
+        final index = _posts.indexWhere((p) => p.id == post.id);
+        if (index != -1) {
+          _posts[index] = _posts[index].copyWith(
+            currentUserReaction: reaction.name.toUpperCase(),
+          );
+        }
+      });
+      await widget.postService.reactToPost(
+          post.id,
+          reaction.toString()
+      );
+
+    } catch (e) {
+      _loadHomeData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to react: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   @override
