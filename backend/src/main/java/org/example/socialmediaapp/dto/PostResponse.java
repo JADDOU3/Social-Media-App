@@ -18,4 +18,5 @@ public class PostResponse {
     private List<String> imageUrls;
     private ReactionType currentUserReaction;
     private Map<ReactionType, Integer> reactionCounts;
+    private int commentCount;
 }

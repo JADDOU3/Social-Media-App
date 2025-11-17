@@ -173,6 +173,7 @@ public class PostService {
         if (currentUser != null) {
             Optional<PostReaction> userReaction = postReactionRepo.findByPostAndUser(post, currentUser);
             userReaction.ifPresent(reaction -> response.setCurrentUserReaction(reaction.getType()));
+
             List<PostReaction> reactions = postReactionRepo.findByPost(post);
             Map<ReactionType, Integer> counts = new EnumMap<>(ReactionType.class);
             for (ReactionType type : ReactionType.values()) {
@@ -182,6 +183,9 @@ public class PostService {
                 counts.put(r.getType(), counts.get(r.getType()) + 1);
             }
             response.setReactionCounts(counts);
+
+            int commentCount = postCommentRepo.countByPost(post);
+            response.setCommentCount(commentCount);
         }
 
         return response;
