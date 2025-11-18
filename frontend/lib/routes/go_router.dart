@@ -15,6 +15,7 @@ import 'package:frontend/services/profile_picture_service.dart';
 import 'package:frontend/services/user_service.dart';
 import 'package:frontend/routes/app_router.dart';
 import 'package:go_router/go_router.dart';
+import 'package:frontend/screens/check_auth_screen.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey =
 GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -31,9 +32,13 @@ final friendService = FriendService(apiService);
 final GoRouter router = GoRouter(
   navigatorKey: rootNavigatorKey,
 
-  initialLocation: '/login',
+  initialLocation: AppRoutes.checkAuth,
 
   routes: [
+    GoRoute(
+      path:AppRoutes.checkAuth,
+      builder: (context, state) => const CheckAuthScreen(),
+    ),
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
