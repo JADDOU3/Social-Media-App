@@ -65,6 +65,12 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    await _localStorage.clearAuth();
+    try {
+      await _apiService.post('/auth/logout', data: {});
+    } catch (e) {
+      print('Logout API call failed: $e');
+    } finally {
+      await _localStorage.clearAuth();
+    }
   }
 }

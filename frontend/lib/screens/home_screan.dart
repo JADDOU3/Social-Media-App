@@ -4,13 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/post.dart';
 import '../routes/app_router.dart';
-import '../routes/go_router.dart';
 import '../services/post_service.dart';
 import '../services/profile_picture_service.dart';
 import '../services/comment_service.dart';
 import '../services/user_service.dart';
 import '../utils/app_color.dart';
 import '../utils/theme_provider.dart';
+import '../utils/logout_utils.dart';
 import '../widgets/post_card.dart';
 import '../widgets/create_post_dialog.dart';
 import '../enums/reaction_type.dart';
@@ -34,8 +34,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Post> _posts = [];
-  Map<int, Uint8List?> _profilePicturesCache = {};
   Uint8List? _currentUserProfilePicture;
+  Map<int, Uint8List?> _profilePicturesCache = {};
   String _currentUserEmail = '';
   bool _isLoading = true;
   String? _error;
@@ -60,12 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
       await widget.profilePictureService.getUserProfilePicture(null);
 
       final posts = await widget.postService.getFriendsPosts();
-
-      final uniqueAuthorIds = posts
-          .map((p) => p.authorEmail)
-          .where((email) => email != null)
-          .toSet();
-
 
       setState(() {
         _posts = posts;
@@ -113,6 +107,58 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     }
+  }
+
+  void _showLogoutConfirmation(bool isDark) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: isDark
+              ? AppColors.darkCardBackground
+              : AppColors.lightCardBackground,
+          title: Text(
+            'Confirm Logout',
+            style: TextStyle(
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                performLogout(context);
+              },
+              child: const Text(
+                'Logout',
+                style: TextStyle(color: AppColors.error),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -451,62 +497,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showLogoutConfirmation(bool isDark) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: isDark
-              ? AppColors.darkCardBackground
-              : AppColors.lightCardBackground,
-          title: Text(
-            'Logout',
-            style: TextStyle(
-              color: isDark
-                  ? AppColors.darkTextPrimary
-                  : AppColors.lightTextPrimary,
-            ),
-          ),
-          content: Text(
-            'Are you sure you want to logout?',
-            style: TextStyle(
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(dialogContext);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Logged out successfully'),
-                    ),
-                  );
-                  // TODO: Add actual logout logic here
-                }
-              },
-              child: const Text(
-                'Logout',
-                style: TextStyle(color: AppColors.error),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }
