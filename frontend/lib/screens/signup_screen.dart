@@ -51,7 +51,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final data = {
       'email': _email.text.trim(),
       'password': _password.text.trim(),
-      'name': _name.text.trim().isEmpty ? null : _name.text.trim(),
+      'name':_name.text.trim(),
       'job': _job.text.trim().isEmpty ? null : _job.text.trim(),
       'phoneNumber': _phone.text.trim().isEmpty ? null : _phone.text.trim(),
       'gender': _selectedGender,
@@ -101,7 +101,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    CustomTextField(controller: _name, label: "Full Name"),
+                    CustomTextField(
+                      controller: _name,
+                      label: "Full Name",
+                      validator: Validators.validateFullName,
+                    ),
                     const SizedBox(height: 12),
                     CustomTextField(
                         controller: _email,
