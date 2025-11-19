@@ -11,9 +11,13 @@ import '../services/profile_picture_service.dart';
 import '../services/user_service.dart';
 import '../services/comment_service.dart';
 import '../services/friend_service.dart';
+import '../services/auth_service.dart';
+import '../services/api_service.dart';
+import '../services/local_storage_service.dart';
 import '../utils/app_color.dart';
 import '../utils/theme_provider.dart';
 import '../utils/logout_utils.dart';
+import '../utils/snackbar_utils.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/post_card.dart';
 import '../widgets/create_post_dialog.dart';
@@ -408,13 +412,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextButton(
               onPressed: () async {
                 Navigator.pop(dialogContext);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Logged out successfully'),
-                    ),
-                  );
-                }
+                await performLogout(context);
               },
               child: const Text(
                 'Logout',
