@@ -48,6 +48,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
 
+    final email = _email.text.trim();
+    final password = _password.text.trim();
+
     final data = {
       'email': _email.text.trim(),
       'password': _password.text.trim(),
@@ -61,9 +64,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     try {
       await authService.register(data);
+
+      final loginSuccess = await authService.login(
+        email,
+        password,
+        staySignedIn: false,
+      );
+
       if (mounted) {
-        showSuccessSnackbar(context, "Account created successfully!");
-        context.go('/login');
+        if (loginSuccess) {
+          showSuccessSnackbar(context, "Welcome to Social Media App!");
+          context.go('/home');
+        } else {
+          showSuccessSnackbar(context, "Account created! Please log in.");
+          context.go('/login');
+        }
       }
     } catch (e) {
       showErrorSnackbar(context, e.toString());
