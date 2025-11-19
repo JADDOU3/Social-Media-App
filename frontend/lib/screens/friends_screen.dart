@@ -3,18 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/friend_response.dart';
-import '../models/user_search_result.dart';
 import '../routes/app_router.dart';
 import '../services/friend_service.dart';
+import '../services/profile_picture_service.dart';
 import '../utils/app_color.dart';
 import '../utils/theme_provider.dart';
+import 'dart:typed_data';
 
 class FriendsScreen extends StatefulWidget {
   final FriendService friendService;
+  final ProfilePictureService profilePictureService;
 
   const FriendsScreen({
     Key? key,
     required this.friendService,
+    required this.profilePictureService,
   }) : super(key: key);
 
   @override
@@ -27,11 +30,9 @@ class _FriendsScreenState extends State<FriendsScreen>
   List<FriendResponse> _friends = [];
   List<FriendResponse> _receivedRequests = [];
   List<FriendResponse> _sentRequests = [];
-  List<UserSearchResult> _searchResults = [];
   bool _isLoading = true;
-  bool _isSearching = false;
   String? _error;
-  final TextEditingController _searchController = TextEditingController();
+  final Map<int, Uint8List?> _avatarCache = {};
 
   @override
   void initState() {
@@ -43,8 +44,16 @@ class _FriendsScreenState extends State<FriendsScreen>
   @override
   void dispose() {
     _tabController.dispose();
-    _searchController.dispose();
     super.dispose();
+  }
+
+  Future<Uint8List?> _getAvatar(int userId) async {
+    if (_avatarCache.containsKey(userId)) return _avatarCache[userId];
+    final bytes = await widget.profilePictureService.getUserProfilePicture(userId);
+    setState(() {
+      _avatarCache[userId] = bytes;
+    });
+    return bytes;
   }
 
   Future<void> _loadFriendsData() async {
@@ -74,34 +83,6 @@ class _FriendsScreenState extends State<FriendsScreen>
     }
   }
 
-  Future<void> _searchUsers(String query) async {
-    if (query.isEmpty) {
-      setState(() {
-        _searchResults = [];
-        _isSearching = false;
-      });
-      return;
-    }
-
-    setState(() => _isSearching = true);
-
-    try {
-      final results = await widget.friendService.findUsersByName(query);
-      setState(() {
-        _searchResults = results;
-        _isSearching = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isSearching = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Search failed: ${e.toString()}')),
-        );
-      }
-    }
-  }
 
   Future<void> _sendFriendRequest(int userId) async {
     try {
@@ -111,10 +92,6 @@ class _FriendsScreenState extends State<FriendsScreen>
           const SnackBar(content: Text('Friend request sent!')),
         );
         _loadFriendsData();
-        _searchController.clear();
-        setState(() {
-          _searchResults = [];
-        });
       }
     } catch (e) {
       if (mounted) {
@@ -233,59 +210,24 @@ class _FriendsScreenState extends State<FriendsScreen>
         title: const Text('Friends'),
         centerTitle: true,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(100),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: _searchUsers,
-                  decoration: InputDecoration(
-                    hintText: 'Search users...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() {
-                          _searchResults = [];
-                        });
-                      },
-                    )
-                        : null,
-                    filled: true,
-                    fillColor: isDark
-                        ? AppColors.darkCardBackground
-                        : AppColors.lightCardBackground,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
+          preferredSize: const Size.fromHeight(48),
+          child: TabBar(
+            controller: _tabController,
+            indicatorColor: AppColors.primary,
+            labelColor: AppColors.primary,
+            unselectedLabelColor: isDark
+                ? AppColors.darkTextSecondary
+                : AppColors.lightTextSecondary,
+            tabs: [
+              Tab(
+                text: 'Friends (${_friends.length})',
               ),
-              if (_searchResults.isEmpty)
-                TabBar(
-                  controller: _tabController,
-                  indicatorColor: AppColors.primary,
-                  labelColor: AppColors.primary,
-                  unselectedLabelColor: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
-                  tabs: [
-                    Tab(
-                      text: 'Friends (${_friends.length})',
-                    ),
-                    Tab(
-                      text: 'Received (${_receivedRequests.length})',
-                    ),
-                    Tab(
-                      text: 'Sent (${_sentRequests.length})',
-                    ),
-                  ],
-                ),
+              Tab(
+                text: 'Received (${_receivedRequests.length})',
+              ),
+              Tab(
+                text: 'Sent (${_sentRequests.length})',
+              ),
             ],
           ),
         ),
@@ -315,10 +257,6 @@ class _FriendsScreenState extends State<FriendsScreen>
       );
     }
 
-    if (_searchResults.isNotEmpty || _searchController.text.isNotEmpty) {
-      return _buildSearchResults(isDark);
-    }
-
     return TabBarView(
       controller: _tabController,
       children: [
@@ -329,135 +267,6 @@ class _FriendsScreenState extends State<FriendsScreen>
     );
   }
 
-  Widget _buildSearchResults(bool isDark) {
-    if (_isSearching) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_searchResults.isEmpty && _searchController.text.isNotEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.person_search,
-              size: 64,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No users found',
-              style: TextStyle(
-                fontSize: 16,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: _searchResults.length,
-      itemBuilder: (context, index) {
-        final user = _searchResults[index];
-        return _buildUserCard(user, isDark);
-      },
-    );
-  }
-
-  Widget _buildUserCard(UserSearchResult user, bool isDark) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: isDark ? AppColors.darkCardBackground : AppColors.lightCardBackground,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () {
-          context.go('${AppRoutes.profile}/${user.id}');
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            children: [
-              Hero(
-                tag: 'user_${user.id}',
-                child: CircleAvatar(
-                  radius: 30,
-                  backgroundColor: AppColors.primary,
-                  child: Text(
-                    user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user.name,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      user.email,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                      ),
-                    ),
-                    if (user.bio != null && user.bio!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        user.bio!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontStyle: FontStyle.italic,
-                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: () {
-                  _sendFriendRequest(user.id);
-                },
-                icon: const Icon(Icons.person_add, size: 18),
-                label: const Text('Add'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildFriendsList(bool isDark) {
     if (_friends.isEmpty) {
@@ -481,33 +290,46 @@ class _FriendsScreenState extends State<FriendsScreen>
   }
 
   Widget _buildFriendCard(FriendResponse friend, bool isDark) {
+    final int friendId = friend.receiverId;
+    final String friendName = friend.receiverName;
+    final String friendEmail = friend.receiverEmail;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: isDark ? AppColors.darkCardBackground : AppColors.lightCardBackground,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          context.go('${AppRoutes.profile}/${friend.receiverId}');
+          context.go('${AppRoutes.profile}/$friendId');
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Row(
             children: [
-              Hero(
-                tag: 'user_${friend.receiverId}',
-                child: CircleAvatar(
-                  radius: 30,
-                  backgroundColor: AppColors.primary,
-                  child: Text(
-                    friend.receiverName.isNotEmpty ? friend.receiverName[0].toUpperCase() : '?',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
+              FutureBuilder<Uint8List?>(
+                future: _getAvatar(friendId),
+                builder: (context, snapshot) {
+                  final bytes = snapshot.data;
+                  return Hero(
+                    tag: 'user_$friendId',
+                    child: CircleAvatar(
+                      radius: 30,
+                      backgroundColor: AppColors.primary,
+                      backgroundImage: bytes != null ? MemoryImage(bytes) : null,
+                      child: bytes == null
+                          ? Text(
+                              friendName.isNotEmpty ? friendName[0].toUpperCase() : '?',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : null,
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -515,7 +337,7 @@ class _FriendsScreenState extends State<FriendsScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      friend.receiverName,
+                      friendName,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 17,
@@ -524,7 +346,7 @@ class _FriendsScreenState extends State<FriendsScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      friend.receiverEmail,
+                      friendEmail,
                       style: TextStyle(
                         fontSize: 14,
                         color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
@@ -540,9 +362,9 @@ class _FriendsScreenState extends State<FriendsScreen>
                 ),
                 onSelected: (value) {
                   if (value == 'remove') {
-                    _removeFriend(friend.id, friend.receiverName);
+                    _removeFriend(friend.id, friendName);
                   } else if (value == 'block') {
-                    _blockUser(friend.id, friend.receiverName);
+                    _blockUser(friend.id, friendName);
                   }
                 },
                 itemBuilder: (context) => [

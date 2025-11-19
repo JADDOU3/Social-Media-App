@@ -1,6 +1,6 @@
 class UserProfile {
   final int? id;
-  final String email;
+  final String? email;
   final String? name;
   final String? bio;
   final String? job;
@@ -13,7 +13,7 @@ class UserProfile {
 
   UserProfile({
     this.id,
-    required this.email,
+    this.email,
     this.name,
     this.bio,
     this.job,
