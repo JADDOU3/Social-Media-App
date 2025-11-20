@@ -261,6 +261,8 @@ public class FriendService {
         response.setId(friend.getId());
         response.setSenderId(friend.getUser1().getId());
         response.setReceiverId(friend.getUser2().getId());
+        response.setSenderName(friend.getUser1().getName());
+        response.setReceiverName(friend.getUser2().getName());
         response.setBlocked(friend.isBlocked());
         response.setRequestStatus(friend.getRequestStatus());
         return response;

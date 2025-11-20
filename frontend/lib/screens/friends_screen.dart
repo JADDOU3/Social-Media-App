@@ -292,7 +292,6 @@ class _FriendsScreenState extends State<FriendsScreen>
   Widget _buildFriendCard(FriendResponse friend, bool isDark) {
     final int friendId = friend.receiverId;
     final String friendName = friend.receiverName;
-    final String friendEmail = friend.receiverEmail;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -319,13 +318,13 @@ class _FriendsScreenState extends State<FriendsScreen>
                       backgroundImage: bytes != null ? MemoryImage(bytes) : null,
                       child: bytes == null
                           ? Text(
-                              friendName.isNotEmpty ? friendName[0].toUpperCase() : '?',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
+                        friendName.isNotEmpty ? friendName[0].toUpperCase() : '?',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
                           : null,
                     ),
                   );
@@ -345,13 +344,6 @@ class _FriendsScreenState extends State<FriendsScreen>
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      friendEmail,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -464,13 +456,6 @@ class _FriendsScreenState extends State<FriendsScreen>
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          request.senderEmail,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -583,13 +568,6 @@ class _FriendsScreenState extends State<FriendsScreen>
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      request.receiverEmail,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                      ),
-                    ),
                     const SizedBox(height: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

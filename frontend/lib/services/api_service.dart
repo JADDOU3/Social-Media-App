@@ -79,7 +79,7 @@ class ApiService {
         options: Options(extra: {'auth_required': authRequired}),
       );
       return response.data;
-    } on DioException {
+    } on DioException{
       rethrow;
     }
   }
