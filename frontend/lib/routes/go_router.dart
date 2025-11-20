@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:frontend/screens/blocked_users_screen.dart';
-import 'package:frontend/screens/friends_screen.dart';
-import 'package:frontend/screens/home_screan.dart';
-import 'package:frontend/screens/profile_screen.dart';
-import 'package:frontend/screens/login_screen.dart';
-import 'package:frontend/screens/signup_screen.dart';
-import 'package:frontend/services/api_service.dart';
-import 'package:frontend/services/comment_service.dart';
-import 'package:frontend/services/friend_service.dart';
-import 'package:frontend/services/local_storage_service.dart';
-import 'package:frontend/services/post_service.dart';
-import 'package:frontend/services/profile_picture_service.dart';
-import 'package:frontend/services/user_service.dart';
-import 'package:frontend/routes/app_router.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../screens/blocked_users_screen.dart';
+import '../screens/friends_screen.dart';
+import '../screens/home_screan.dart';
+import '../screens/profile_screen.dart';
+import '../screens/login_screen.dart';
+import '../screens/signup_screen.dart';
+import '../screens/check_auth_screen.dart';
+import '../services/api_service.dart';
+import '../services/comment_service.dart';
+import '../services/friend_service.dart';
+import '../services/local_storage_service.dart';
+import '../services/post_service.dart';
+import '../services/profile_picture_service.dart';
+import '../services/user_service.dart';
+import '../routes/app_router.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey =
 GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -30,10 +32,12 @@ final friendService = FriendService(apiService);
 
 final GoRouter router = GoRouter(
   navigatorKey: rootNavigatorKey,
-
-  initialLocation: '/login',
-
+  initialLocation: AppRoutes.checkAuth,
   routes: [
+    GoRoute(
+      path: AppRoutes.checkAuth,
+      builder: (context, state) => const CheckAuthScreen(),
+    ),
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
@@ -42,10 +46,9 @@ final GoRouter router = GoRouter(
       path: '/signup',
       builder: (context, state) => const SignUpScreen(),
     ),
-
     GoRoute(
       path: AppRoutes.home,
-      builder: (context, state) =>  HomeScreen(
+      builder: (context, state) => HomeScreen(
         userService: userService,
         profilePictureService: profilePictureService,
         postService: postService,
@@ -82,6 +85,7 @@ final GoRouter router = GoRouter(
       path: AppRoutes.friends,
       builder: (context, state) => FriendsScreen(
         friendService: friendService,
+        profilePictureService: profilePictureService,
       ),
     ),
     GoRoute(

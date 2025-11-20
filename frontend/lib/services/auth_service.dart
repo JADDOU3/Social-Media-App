@@ -1,6 +1,8 @@
 import '../models/user_profile.dart';
 import 'api_service.dart';
 import 'local_storage_service.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class AuthService {
   final ApiService _apiService;
@@ -8,17 +10,52 @@ class AuthService {
 
   AuthService(this._apiService, this._localStorage);
 
-  Future<String> login(String email, String password) async {
-    final payload = {'email': email, 'password': password};
-    final response = await _apiService.post('/auth/login', data: payload, authRequired: false);
+  Future<bool> login(String email, String password, {required bool staySignedIn}) async {
+    try {
+      final response = await _apiService.post(
+        '/auth/login',
+        data: {'email': email, 'password': password},
+        authRequired: false,
+      );
 
-    if (response == null || response['access_token'] == null) {
-      throw Exception('Login failed: missing access_token');
+      if (response == null) return false;
+
+      final token = response['access_token'];
+      if (token == null) return false;
+
+      await _localStorage.saveAccessToken(token);
+
+      final expiry = DateTime.now().add(Duration(days: staySignedIn ? 7 : 1));
+      await _localStorage.saveExpiry(expiry);
+
+      return true;
+    } catch (e) {
+      return false;
     }
+  }
 
-    final token = response['access_token'];
-    await _localStorage.saveAccessToken(token);
-    return token;
+  Future<bool> refreshToken() async {
+    final refreshToken = await _localStorage.getRefreshToken();
+    if (refreshToken == null) return false;
+
+    try {
+      final response = await _apiService.post('/auth/refresh',
+        data: {'refreshToken': refreshToken},
+        authRequired: false,
+      );
+
+      if (response == null) return false;
+
+      final newToken = response['accessToken'];
+      await _localStorage.saveAccessToken(newToken);
+
+      final expiry = DateTime.now().add(Duration(days: 7));
+      await _localStorage.saveExpiry(expiry);
+
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<UserProfile> register(Map<String, dynamic> userData) async {
@@ -29,7 +66,11 @@ class AuthService {
 
   Future<void> logout() async {
     try {
-      await _localStorage.saveAccessToken('');
-    } catch (_) {}
+      await _apiService.post('/auth/logout', data: {});
+    } catch (e) {
+      print('Logout API call failed: $e');
+    } finally {
+      await _localStorage.clearAuth();
+    }
   }
 }

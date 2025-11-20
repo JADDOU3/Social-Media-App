@@ -1,7 +1,9 @@
+  import 'dart:convert';
   import 'package:dio/dio.dart';
   import '../models/user_profile.dart';
+  import '../models/user_search_result.dart';
   import 'api_service.dart';
-
+  
   class UserService {
     final ApiService _apiService;
 
@@ -77,4 +79,46 @@
       }
     }
 
+    Future<List<UserSearchResult>> findUsersByName(String name) async {
+      final query = name.trim();
+      if (query.length < 2) {
+        return <UserSearchResult>[];
+      }
+
+
+      try {
+        final response = await _apiService.get('users/$query');
+        final data = response;
+
+        List<dynamic> rawList;
+        if (data == null) {
+          return <UserSearchResult>[];
+        } else if (data is List) {
+          rawList = data;
+        } else if (data is String) {
+          final trimmed = data.trim();
+          if (trimmed.isEmpty) return <UserSearchResult>[];
+          if (trimmed.startsWith('[')) {
+            rawList = jsonDecode(trimmed) as List<dynamic>;
+          } else {
+            throw FormatException('Unexpected response format for users search');
+          }
+        } else {
+          throw FormatException('Unsupported response type: ${data.runtimeType}');
+        }
+
+        return rawList
+            .map<UserSearchResult>((e) => UserSearchResult.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+      } on DioException catch (e) {
+        final status = e.response?.statusCode;
+        final body = e.response?.data;
+        final bodySnippet = body is String
+            ? (body.length > 500 ? body.substring(0, 500) : body)
+            : body?.toString();
+        throw Exception('Failed to search users: HTTP $status, type=${e.type}, body=$bodySnippet');
+      } catch (e) {
+        throw Exception('Failed to search users: $e');
+      }
+    }
   }

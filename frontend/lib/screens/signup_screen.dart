@@ -48,10 +48,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
 
+    final email = _email.text.trim();
+    final password = _password.text.trim();
+
     final data = {
       'email': _email.text.trim(),
       'password': _password.text.trim(),
-      'name': _name.text.trim().isEmpty ? null : _name.text.trim(),
+      'name':_name.text.trim(),
       'job': _job.text.trim().isEmpty ? null : _job.text.trim(),
       'phoneNumber': _phone.text.trim().isEmpty ? null : _phone.text.trim(),
       'gender': _selectedGender,
@@ -61,9 +64,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     try {
       await authService.register(data);
+
+      final loginSuccess = await authService.login(
+        email,
+        password,
+        staySignedIn: false,
+      );
+
       if (mounted) {
-        showSuccessSnackbar(context, "Account created successfully!");
-        context.go('/login');
+        if (loginSuccess) {
+          showSuccessSnackbar(context, "Welcome to Social Media App!");
+          context.go('/home');
+        } else {
+          showSuccessSnackbar(context, "Account created! Please log in.");
+          context.go('/login');
+        }
       }
     } catch (e) {
       showErrorSnackbar(context, e.toString());
@@ -80,6 +95,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFAF92D7),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFAF92D7),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => context.go('/login'),
+        ),
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -100,8 +123,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
-
-                    CustomTextField(controller: _name, label: "Full Name"),
+                    CustomTextField(
+                      controller: _name,
+                      label: "Full Name",
+                      validator: Validators.validateFullName,
+                    ),
                     const SizedBox(height: 12),
                     CustomTextField(
                         controller: _email,
@@ -119,7 +145,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         validator: (v) =>
                             Validators.validateConfirmPassword(_password.text, v)),
                     const SizedBox(height: 12),
-
                     const Text("Gender (optional):"),
                     const SizedBox(height: 6),
                     Wrap(
@@ -142,12 +167,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-
                     CustomTextField(controller: _job, label: "Job (optional)"),
                     const SizedBox(height: 12),
                     CustomTextField(controller: _phone, label: "Phone Number (optional)"),
                     const SizedBox(height: 12),
-
                     GestureDetector(
                       onTap: _selectDate,
                       child: AbsorbPointer(
@@ -174,7 +197,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ],
                     ),
                     const SizedBox(height: 20),
-
                     ElevatedButton(
                       onPressed: _loading ? null : () => _handleRegister(authService),
                       style: ElevatedButton.styleFrom(

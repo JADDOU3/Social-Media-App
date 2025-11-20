@@ -4,16 +4,17 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/post.dart';
 import '../routes/app_router.dart';
-import '../routes/go_router.dart';
 import '../services/post_service.dart';
 import '../services/profile_picture_service.dart';
 import '../services/comment_service.dart';
 import '../services/user_service.dart';
 import '../utils/app_color.dart';
 import '../utils/theme_provider.dart';
+import '../utils/logout_utils.dart';
 import '../widgets/post_card.dart';
 import '../widgets/create_post_dialog.dart';
 import '../enums/reaction_type.dart';
+import '../models/user_search_result.dart';
 
 class HomeScreen extends StatefulWidget {
   final PostService postService;
@@ -34,8 +35,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Post> _posts = [];
-  Map<int, Uint8List?> _profilePicturesCache = {};
   Uint8List? _currentUserProfilePicture;
+  Map<int, Uint8List?> _profilePicturesCache = {};
   String _currentUserEmail = '';
   bool _isLoading = true;
   String? _error;
@@ -54,18 +55,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final profile = await widget.userService.getProfile();
-      _currentUserEmail = profile.email;
+      _currentUserEmail = profile.email ?? '';
 
       _currentUserProfilePicture =
       await widget.profilePictureService.getUserProfilePicture(null);
 
       final posts = await widget.postService.getFriendsPosts();
-
-      final uniqueAuthorIds = posts
-          .map((p) => p.authorEmail)
-          .where((email) => email != null)
-          .toSet();
-
 
       setState(() {
         _posts = posts;
@@ -115,6 +110,58 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _showLogoutConfirmation(bool isDark) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: isDark
+              ? AppColors.darkCardBackground
+              : AppColors.lightCardBackground,
+          title: Text(
+            'Confirm Logout',
+            style: TextStyle(
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                performLogout(context);
+              },
+              child: const Text(
+                'Logout',
+                style: TextStyle(color: AppColors.error),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -125,6 +172,24 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Home'),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () async {
+              final selectedUserId = await showSearch<int?>(
+                context: context,
+                delegate: UserSearchDelegate(
+                  userService: widget.userService,
+                  profilePictureService: widget.profilePictureService,
+                  isDark: isDark,
+                ),
+              );
+              if (selectedUserId != null) {
+                if (!mounted) return;
+                context.go('${AppRoutes.profile}/$selectedUserId');
+              }
+            },
+            tooltip: 'Search',
+          ),
           IconButton(
             icon: const Icon(Icons.people_outline),
             onPressed: () => context.go(AppRoutes.friends),
@@ -451,60 +516,169 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showLogoutConfirmation(bool isDark) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: isDark
-              ? AppColors.darkCardBackground
-              : AppColors.lightCardBackground,
-          title: Text(
-            'Logout',
+}
+
+class UserSearchDelegate extends SearchDelegate<int?> {
+  final UserService userService;
+  final ProfilePictureService profilePictureService;
+  final bool isDark;
+
+  UserSearchDelegate({
+    required this.userService,
+    required this.profilePictureService,
+    required this.isDark,
+  });
+
+  @override
+  String? get searchFieldLabel => 'Search users by name';
+
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      if (query.isNotEmpty)
+        IconButton(
+          icon: const Icon(Icons.clear),
+          onPressed: () {
+            query = '';
+            showSuggestions(context);
+          },
+        ),
+    ];
+  }
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () => close(context, null),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    if (query.trim().isEmpty) {
+      return _buildHint();
+    }
+    return _buildResultsList();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    if (query.trim().isEmpty) {
+      return _buildHint();
+    }
+    return _buildResultsList();
+  }
+
+  Widget _buildHint() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.search,
+            size: 64,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Type a name to search',
             style: TextStyle(
-              color: isDark
-                  ? AppColors.darkTextPrimary
-                  : AppColors.lightTextPrimary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
             ),
           ),
-          content: Text(
-            'Are you sure you want to logout?',
-            style: TextStyle(
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResultsList() {
+    return FutureBuilder<List<UserSearchResult>>(
+      future: userService.findUsersByName(query.trim()),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
               child: Text(
-                'Cancel',
+                'Search failed: ${snapshot.error}',
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                 ),
               ),
             ),
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(dialogContext);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Logged out successfully'),
-                    ),
-                  );
-                  // TODO: Add actual logout logic here
-                }
-              },
-              child: const Text(
-                'Logout',
-                style: TextStyle(color: AppColors.error),
-              ),
+          );
+        }
+        final results = snapshot.data ?? [];
+        if (results.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.person_search,
+                  size: 64,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'No users found',
+                  style: TextStyle(
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                  ),
+                ),
+              ],
             ),
-          ],
+          );
+        }
+
+        return ListView.separated(
+          itemCount: results.length,
+          separatorBuilder: (_, __) => Divider(
+            height: 1,
+            color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
+          ),
+          itemBuilder: (context, index) {
+            final user = results[index];
+            return ListTile(
+              onTap: () => close(context, user.id),
+              leading: FutureBuilder<Uint8List?>(
+                future: profilePictureService.getUserProfilePicture(user.id),
+                builder: (context, snap) {
+                  final bytes = snap.data;
+                  return CircleAvatar(
+                    radius: 22,
+                    backgroundColor: AppColors.primary,
+                    backgroundImage: bytes != null ? MemoryImage(bytes) : null,
+                    child: bytes == null
+                        ? Text(
+                            user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          )
+                        : null,
+                  );
+                },
+              ),
+              title: Text(
+                user.name,
+                style: TextStyle(
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              subtitle: Text(
+                user.email,
+                style: TextStyle(
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                ),
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            );
+          },
         );
       },
     );

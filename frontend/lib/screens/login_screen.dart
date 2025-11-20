@@ -21,35 +21,37 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
+  bool _staySignedIn = false;
 
   static const Color primary = Color(0xFFAF92D7);
 
-  void _handleLogin(AuthService authService) async {
+  Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _loading = true);
-    try {
-      await authService.login(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-      );
-      if (mounted) {
-        showSuccessSnackbar(context, "Login successful!");
-        context.go('/');
-      }
-    } catch (e) {
-      showErrorSnackbar(context, e.toString());
-    } finally {
-      if (mounted) setState(() => _loading = false);
+
+    final apiService = context.read<ApiService>();
+    final localStorage = context.read<LocalStorageService>();
+    final authService = AuthService(apiService, localStorage);
+
+    final success = await authService.login(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
+      staySignedIn: _staySignedIn,
+    );
+
+    if (!success) {
+      showErrorSnackbar(context, "Invalid email or password");
+    } else {
+      showSuccessSnackbar(context, "Login successful!");
+      context.go('/home');
     }
+
+    setState(() => _loading = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final apiService = Provider.of<ApiService>(context, listen: false);
-    final localStorage = Provider.of<LocalStorageService>(context, listen: false);
-    final authService = AuthService(apiService, localStorage);
-
     return Scaffold(
       backgroundColor: primary,
       body: Center(
@@ -77,19 +79,38 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
+
                     CustomTextField(
                       controller: _emailController,
                       label: "Email",
                       validator: Validators.validateEmail,
                       keyboardType: TextInputType.emailAddress,
                     ),
+
                     const SizedBox(height: 16),
+
                     PasswordField(
                       controller: _passwordController,
                       label: "Password",
                       validator: Validators.validatePassword,
                     ),
-                    const SizedBox(height: 28),
+
+                    const SizedBox(height: 12),
+
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _staySignedIn,
+                          onChanged: (v) =>
+                              setState(() => _staySignedIn = v ?? false),
+                          activeColor: primary,
+                        ),
+                        const Text("Stay signed in"),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -100,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onPressed: _loading ? null : () => _handleLogin(authService),
+                        onPressed: _loading ? null : _onSubmit,
                         child: _loading
                             ? const CircularProgressIndicator(color: Colors.white)
                             : const Text(
@@ -113,7 +134,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 16),
+
                     TextButton(
                       onPressed: () => context.push('/signup'),
                       child: Text(
@@ -123,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ),
+                    )
                   ],
                 ),
               ),

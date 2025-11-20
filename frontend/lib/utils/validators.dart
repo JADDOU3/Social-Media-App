@@ -38,4 +38,14 @@ class Validators {
     if (pass != confirm) return 'Passwords do not match';
     return null;
   }
+
+  static String? validateFullName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Full name is required';
+    }
+    if (value.trim().length < 2) {
+      return 'Name must be at least 2 characters';
+    }
+    return null;
+  }
 }

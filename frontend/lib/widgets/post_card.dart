@@ -419,28 +419,149 @@ class _PostCardState extends State<PostCard> {
   }
 
   Widget _buildActions() {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          ReactionButton(
-            currentReaction: widget.post.currentReactionType,
-            onReactionSelected: widget.onReactionSelected ?? (reaction) {},
-            isDark: widget.isDark,
+    int totalReactions = 0;
+    if (widget.post.reactionCounts != null) {
+      totalReactions = widget.post.reactionCounts!.values.fold(0, (sum, count) => sum + count);
+    }
+
+    int commentCount = widget.post.commentCount ?? 0;
+    if (widget.post.reactionCounts != null) {
+      totalReactions = widget.post.reactionCounts!.values.fold(0, (sum, count) => sum + count);
+    }
+
+
+    return Column(
+      children: [
+        if (totalReactions > 0 || commentCount > 0)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (totalReactions > 0)
+                  Row(
+                    children: [
+                      ..._buildReactionIcons(),
+                      const SizedBox(width: 6),
+                      Text(
+                        '$totalReactions',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: widget.isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  const SizedBox.shrink(),
+
+                if (commentCount > 0)
+                  Text(
+                    '$commentCount ${commentCount == 1 ? 'comment' : 'comments'}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: widget.isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
+                    ),
+                  )
+                else
+                  const SizedBox.shrink(),
+              ],
+            ),
           ),
-          _buildActionButton(
-            Icons.comment_outlined,
-            'Comment',
-                () {
-              setState(() {
-                _showComments = !_showComments;
-              });
-            },
+
+        if (totalReactions > 0 || commentCount > 0)
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: widget.isDark
+                ? AppColors.darkDivider
+                : AppColors.lightDivider,
           ),
-        ],
-      ),
+
+        // Action buttons
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              ReactionButton(
+                currentReaction: widget.post.currentReactionType,
+                onReactionSelected: widget.onReactionSelected ?? (reaction) {},
+                isDark: widget.isDark,
+              ),
+              _buildActionButton(
+                Icons.comment_outlined,
+                'Comment',
+                    () {
+                  setState(() {
+                    _showComments = !_showComments;
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
     );
+  }
+
+  List<Widget> _buildReactionIcons() {
+    if (widget.post.reactionCounts == null) return [];
+
+    List<Widget> icons = [];
+
+    final activeReactions = <MapEntry<ReactionType, int>>[];
+
+    for (var entry in widget.post.reactionCounts!.entries) {
+      if (entry.value > 0) {
+        try {
+          final reactionType = ReactionType.values.firstWhere(
+                (e) => e.name.toUpperCase() == entry.key.toUpperCase(),
+          );
+          activeReactions.add(MapEntry(reactionType, entry.value));
+        } catch (e) {
+          continue;
+        }
+      }
+    }
+    activeReactions.sort((a, b) => b.value.compareTo(a.value));
+    final topReactions = activeReactions.take(3).toList();
+
+    for (int i = 0; i < topReactions.length; i++) {
+      final entry = topReactions[i];
+      icons.add(
+        Transform.translate(
+          offset: Offset(-i * 6.0, 0),
+          child: Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: widget.isDark
+                  ? AppColors.darkCardBackground
+                  : AppColors.lightCardBackground,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: widget.isDark
+                    ? AppColors.darkCardBackground
+                    : AppColors.lightCardBackground,
+                width: 2,
+              ),
+            ),
+            child: Icon(
+              entry.key.icon,
+              size: 12,
+              color: entry.key.color,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return icons;
   }
 
   Widget _buildActionButton(IconData icon, String label, VoidCallback onTap) {
