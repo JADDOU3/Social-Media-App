@@ -8,6 +8,7 @@ import '../utils/validators.dart';
 import '../widgets/password_field.dart';
 import '../widgets/custom_text_field.dart';
 import '../utils/snackbar_utils.dart';
+import '../utils/app_color.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -94,9 +95,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final authService = AuthService(apiService, localStorage);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFAF92D7),
+      backgroundColor: AppColors.primary,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFAF92D7),
+        backgroundColor: AppColors.primary,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -107,7 +108,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Card(
-            color: Colors.white.withOpacity(0.9),
+            color: AppColors.lightCardBackground.withOpacity(0.9),
             elevation: 4,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
@@ -119,7 +120,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   children: [
                     const Text(
                       "Create Account",
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.lightTextPrimary,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
@@ -130,22 +135,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     const SizedBox(height: 12),
                     CustomTextField(
-                        controller: _email,
-                        label: "Email",
-                        validator: Validators.validateEmail),
+                      controller: _email,
+                      label: "Email",
+                      validator: Validators.validateEmail,
+                    ),
                     const SizedBox(height: 12),
                     PasswordField(
-                        controller: _password,
-                        label: "Password",
-                        validator: Validators.validatePassword),
+                      controller: _password,
+                      label: "Password",
+                      validator: Validators.validatePassword,
+                    ),
                     const SizedBox(height: 12),
                     PasswordField(
-                        controller: _confirm,
-                        label: "Confirm Password",
-                        validator: (v) =>
-                            Validators.validateConfirmPassword(_password.text, v)),
+                      controller: _confirm,
+                      label: "Confirm Password",
+                      validator: (v) =>
+                          Validators.validateConfirmPassword(_password.text, v),
+                    ),
                     const SizedBox(height: 12),
-                    const Text("Gender (optional):"),
+                    const Text(
+                      "Gender (optional):",
+                      style: TextStyle(color: AppColors.lightTextPrimary),
+                    ),
                     const SizedBox(height: 6),
                     Wrap(
                       spacing: 8,
@@ -155,14 +166,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           selected: _selectedGender == "Male",
                           onSelected: (v) =>
                               setState(() => _selectedGender = v ? "Male" : null),
-                          selectedColor: const Color(0xFFAF92D7).withOpacity(0.3),
+                          selectedColor: AppColors.primary.withOpacity(0.3),
                         ),
                         ChoiceChip(
                           label: const Text("Female"),
                           selected: _selectedGender == "Female",
                           onSelected: (v) =>
                               setState(() => _selectedGender = v ? "Female" : null),
-                          selectedColor: const Color(0xFFAF92D7).withOpacity(0.3),
+                          selectedColor: AppColors.primary.withOpacity(0.3),
                         ),
                       ],
                     ),
@@ -175,24 +186,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       onTap: _selectDate,
                       child: AbsorbPointer(
                         child: CustomTextField(
-                            controller: _birthdate, label: "Birthdate (optional)"),
+                          controller: _birthdate,
+                          label: "Birthdate (optional)",
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Text("Social Situation (optional):"),
+                    const Text(
+                      "Social Situation (optional):",
+                      style: TextStyle(color: AppColors.lightTextPrimary),
+                    ),
                     const SizedBox(height: 6),
                     Wrap(
                       spacing: 8,
                       children: [
-                        for (var status
-                        in ["Single", "Married", "Widowed", "Divorced"])
+                        for (var status in ["Single", "Married", "Widowed", "Divorced"])
                           ChoiceChip(
                             label: Text(status),
                             selected: _selectedSocialSituation == status,
                             onSelected: (v) => setState(() =>
                             _selectedSocialSituation = v ? status : null),
-                            selectedColor:
-                            const Color(0xFFAF92D7).withOpacity(0.3),
+                            selectedColor: AppColors.primary.withOpacity(0.3),
                           ),
                       ],
                     ),
@@ -200,7 +214,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ElevatedButton(
                       onPressed: _loading ? null : () => _handleRegister(authService),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFAF92D7),
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(

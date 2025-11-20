@@ -8,6 +8,7 @@ import '../utils/validators.dart';
 import '../widgets/password_field.dart';
 import '../widgets/custom_text_field.dart';
 import '../utils/snackbar_utils.dart';
+import '../utils/app_color.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,8 +23,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _loading = false;
   bool _staySignedIn = false;
-
-  static const Color primary = Color(0xFFAF92D7);
 
   Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -53,12 +52,12 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: primary,
+      backgroundColor: AppColors.primary,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Card(
-            color: Colors.white,
+            color: AppColors.lightCardBackground,
             elevation: 8,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
@@ -75,47 +74,43 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: AppColors.lightTextPrimary,
                       ),
                     ),
                     const SizedBox(height: 24),
-
                     CustomTextField(
                       controller: _emailController,
                       label: "Email",
                       validator: Validators.validateEmail,
                       keyboardType: TextInputType.emailAddress,
                     ),
-
                     const SizedBox(height: 16),
-
                     PasswordField(
                       controller: _passwordController,
                       label: "Password",
                       validator: Validators.validatePassword,
                     ),
-
                     const SizedBox(height: 12),
-
                     Row(
                       children: [
                         Checkbox(
                           value: _staySignedIn,
                           onChanged: (v) =>
                               setState(() => _staySignedIn = v ?? false),
-                          activeColor: primary,
+                          activeColor: AppColors.primary,
                         ),
-                        const Text("Stay signed in"),
+                        const Text(
+                          "Stay signed in",
+                          style: TextStyle(color: AppColors.lightTextPrimary),
+                        ),
                       ],
                     ),
-
                     const SizedBox(height: 20),
-
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: primary,
+                          backgroundColor: AppColors.primary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -134,15 +129,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 16),
-
                     TextButton(
                       onPressed: () => context.push('/signup'),
                       child: Text(
                         "Create new account",
                         style: TextStyle(
-                          color: primary,
+                          color: AppColors.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

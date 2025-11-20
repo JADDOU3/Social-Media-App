@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'custom_text_field.dart';
+import '../utils/app_color.dart';
 
 class PasswordField extends StatefulWidget {
   final TextEditingController controller;
@@ -21,17 +23,17 @@ class _PasswordFieldState extends State<PasswordField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
+    return CustomTextField(
       controller: widget.controller,
-      obscureText: _obscure,
+      label: widget.label,
       validator: widget.validator,
-      decoration: InputDecoration(
-        labelText: widget.label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        suffixIcon: IconButton(
-          icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
-          onPressed: () => setState(() => _obscure = !_obscure),
+      obscureText: _obscure,
+      suffixIcon: IconButton(
+        icon: Icon(
+          _obscure ? Icons.visibility_off : Icons.visibility,
+          color: AppColors.lightIconGray,
         ),
+        onPressed: () => setState(() => _obscure = !_obscure),
       ),
     );
   }
