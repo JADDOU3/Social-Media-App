@@ -22,6 +22,9 @@ import '../widgets/profile_header.dart';
 import '../widgets/post_card.dart';
 import '../widgets/create_post_dialog.dart';
 import '../enums/reaction_type.dart';
+import 'edit_profile_page.dart';
+
+
 
 class ProfileScreen extends StatefulWidget {
   final UserService userService;
@@ -339,15 +342,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 friendStatus: _friendStatus,
                 onEditProfile: _isOwnProfile
                     ? () {
-                  // TODO: Navigate to edit profile screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditProfilePage(
+                        user: _profile!, // بدل user
+                        userService: widget.userService, // بدل _userService
+                        profilePictureService: widget.profilePictureService, // بدل _profilePictureService
+                      ),
+                    ),
+                  );
                 }
                     : null,
+
+
                 onCreatePost: _isOwnProfile ? _showCreatePostDialog : null,
-                onChangeProfilePicture: _isOwnProfile
-                    ? () {
-                  // TODO: Implement profile picture change
-                }
-                    : null,
+
                 onSendFriendRequest:
                 !_isOwnProfile && _friendStatus?.isNone == true
                     ? _sendFriendRequest
