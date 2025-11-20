@@ -85,6 +85,7 @@ final GoRouter router = GoRouter(
       path: AppRoutes.friends,
       builder: (context, state) => FriendsScreen(
         friendService: friendService,
+        userService: userService,
         profilePictureService: profilePictureService,
       ),
     ),

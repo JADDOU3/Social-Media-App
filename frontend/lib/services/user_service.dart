@@ -18,6 +18,21 @@
       }
     }
 
+    Future<int> getCurrentUserId() async {
+      try {
+        final response = await _apiService.get('users/current-user-id');
+        print('this is the response => $response');
+
+        if (response != null && response['id'] != null) {
+          return response['id'];
+        } else {
+          throw Exception('User ID not found in response');
+        }
+      } catch (e) {
+        throw Exception('Failed to fetch user id: $e');
+      }
+    }
+
     Future<UserProfile> updateProfile(Map<String, dynamic> data) async {
       try {
         final response = await _apiService.put('users/update', data: data);

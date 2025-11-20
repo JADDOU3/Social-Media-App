@@ -104,6 +104,15 @@ public class UserController {
         }
     }
 
+    @GetMapping("/current-user-id")
+    public ResponseEntity<User> getCurrentUser() {
+        User currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(404).body(null);
+        }
+        return ResponseEntity.ok(currentUser);
+    }
+
     @GetMapping("/{name}")
     public ResponseEntity<List<User>> findUsersByName(@PathVariable String name) {
         List<User> users = userService.findUsersByName(name);

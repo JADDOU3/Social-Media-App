@@ -1,22 +1,26 @@
 // screens/friends_screen.dart
 import 'package:flutter/material.dart';
+import 'package:frontend/services/local_storage_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/friend_response.dart';
 import '../routes/app_router.dart';
 import '../services/friend_service.dart';
 import '../services/profile_picture_service.dart';
+import '../services/user_service.dart';
 import '../utils/app_color.dart';
 import '../utils/theme_provider.dart';
 import 'dart:typed_data';
 
 class FriendsScreen extends StatefulWidget {
   final FriendService friendService;
+  final UserService userService;
   final ProfilePictureService profilePictureService;
 
   const FriendsScreen({
     Key? key,
     required this.friendService,
+    required this.userService,
     required this.profilePictureService,
   }) : super(key: key);
 
@@ -33,13 +37,29 @@ class _FriendsScreenState extends State<FriendsScreen>
   bool _isLoading = true;
   String? _error;
   final Map<int, Uint8List?> _avatarCache = {};
+  int? _currentUserId;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _loadFriendsData();
+    _initData();
   }
+
+  Future<void> _initData() async {
+    setState(() => _isLoading = true);
+
+    try {
+      _currentUserId = await widget.userService.getCurrentUserId();
+      await _loadFriendsData();
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
 
   @override
   void dispose() {
@@ -290,8 +310,14 @@ class _FriendsScreenState extends State<FriendsScreen>
   }
 
   Widget _buildFriendCard(FriendResponse friend, bool isDark) {
-    final int friendId = friend.receiverId;
-    final String friendName = friend.receiverName;
+    print(_currentUserId);
+    print("id ^");
+    print('bool');
+    final bool isSender = friend.receiverId != _currentUserId;
+
+    print(isSender);
+    final int friendId = isSender ? friend.receiverId : friend.senderId;
+    final String friendName = isSender ? friend.receiverName : friend.senderName;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
