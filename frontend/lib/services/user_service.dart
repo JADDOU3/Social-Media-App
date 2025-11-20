@@ -50,4 +50,31 @@
         throw Exception('Failed to load user profile: $e');
       }
     }
+
+
+    Future<UserProfile> updateFullProfile(UserProfile updatedUser) async {
+      try {
+        final response = await _apiService.put(
+          'users/update',
+          data: {
+            'id': updatedUser.id,
+            'email': updatedUser.email,
+            'name': updatedUser.name,
+            'bio': updatedUser.bio,
+            'job': updatedUser.job,
+            'location': updatedUser.location,
+            'phone': updatedUser.phoneNumber, // مهم انه اسمه phone في الـ API
+            'gender': updatedUser.gender,
+            'dateOfBirth': updatedUser.dateOfBirth,
+            'socialSituation': updatedUser.socialSituation,
+            'profilePicture': updatedUser.profilePicture,
+          },
+        );
+
+        return UserProfile.fromJson(response);
+      } catch (e) {
+        throw Exception('Failed to update full profile: $e');
+      }
+    }
+
   }
