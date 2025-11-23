@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/user_profile.dart';
@@ -31,7 +33,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final ImagePicker _picker = ImagePicker();
 
   File? _newImageFile;
+  Uint8List? _newImageBytes;
+  String? _newImageFilename;
   String? _profileImage;
+  bool _profileImageChanged = false;
 
   late TextEditingController nameController;
   late TextEditingController emailController;
@@ -72,9 +77,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Future<void> pickImage(ImageSource source) async {
     final picked = await _picker.pickImage(source: source);
     if (picked != null) {
+      final bytes = await picked.readAsBytes();
       setState(() {
-        _newImageFile = File(picked.path);
-        _profileImage = picked.path;
+        _newImageBytes = bytes;
+        _newImageFilename = picked.name;
+        _profileImageChanged = true;
+        if (!kIsWeb) {
+          _newImageFile = File(picked.path);
+        }
       });
     }
   }
@@ -113,22 +123,50 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
     setState(() => _isSaving = true);
 
-    final updatedUser = user.copyWith(
-      name: nameController.text.isNotEmpty ? nameController.text : null,
-      email: emailController.text.isNotEmpty ? emailController.text : null,
-      bio: bioController.text.isNotEmpty ? bioController.text : null,
-      job: jobController.text.isNotEmpty ? jobController.text : null,
-      location: locationController.text.isNotEmpty ? locationController.text : null,
-      phoneNumber: phoneController.text.isNotEmpty ? phoneController.text : null,
-      gender: genderValue,
-      dateOfBirth: dateOfBirthController.text.isNotEmpty
-          ? dateOfBirthController.text
-          : null,
-      socialSituation: socialSituationValue,
-      profilePicture: _profileImage,
-    );
-
     try {
+      // Upload profile picture if changed
+      if (_profileImageChanged && _newImageBytes != null && _newImageFilename != null) {
+        try {
+          if (user.profilePicture != null && user.profilePicture!.isNotEmpty) {
+            // Update existing profile picture
+            await profilePictureService.updateProfilePicture(
+              _newImageBytes!,
+              _newImageFilename!,
+            );
+          } else {
+            // Upload new profile picture
+            await profilePictureService.uploadProfilePicture(
+              _newImageBytes!,
+              _newImageFilename!,
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Error uploading profile picture: $e"),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        }
+      }
+
+      // Update user profile
+      final updatedUser = user.copyWith(
+        name: nameController.text.isNotEmpty ? nameController.text : null,
+        email: emailController.text.isNotEmpty ? emailController.text : null,
+        bio: bioController.text.isNotEmpty ? bioController.text : null,
+        job: jobController.text.isNotEmpty ? jobController.text : null,
+        location: locationController.text.isNotEmpty ? locationController.text : null,
+        phoneNumber: phoneController.text.isNotEmpty ? phoneController.text : null,
+        gender: genderValue,
+        dateOfBirth: dateOfBirthController.text.isNotEmpty
+            ? dateOfBirthController.text
+            : null,
+        socialSituation: socialSituationValue,
+      );
+
       await userService.updateFullProfile(updatedUser);
 
       if (mounted) {
@@ -570,7 +608,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                     Navigator.pop(context);
                                   },
                                 ),
-                                if (_profileImage != null)
+                                if (_profileImage != null || _newImageBytes != null)
                                   ListTile(
                                     leading: const Icon(
                                       Icons.delete,
@@ -586,7 +624,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                     onTap: () {
                                       setState(() {
                                         _newImageFile = null;
+                                        _newImageBytes = null;
                                         _profileImage = null;
+                                        _profileImageChanged = true;
                                       });
                                       Navigator.pop(context);
                                     },
@@ -611,8 +651,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               child: SizedBox(
                                 width: 120,
                                 height: 120,
-                                child: _newImageFile != null
-                                    ? Image.file(_newImageFile!, fit: BoxFit.cover)
+                                child: _newImageBytes != null
+                                    ? Image.memory(_newImageBytes!, fit: BoxFit.cover)
                                     : (_profileImage != null
                                     ? Image.network(_profileImage!, fit: BoxFit.cover)
                                     : Image.asset("assets/default_avatar.png", fit: BoxFit.cover)),
