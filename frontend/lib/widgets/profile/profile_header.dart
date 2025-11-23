@@ -1,13 +1,14 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import '../models/user_profile.dart';
-import '../models/friend_status.dart';
-import '../utils/app_color.dart';
+import '../../models/user_profile.dart';
+import '../../models/friend_status.dart';
+import '../../utils/app_color.dart';
 
 class ProfileHeader extends StatelessWidget {
   final UserProfile? profile;
   final Uint8List? profilePicture;
   final int postCount;
+  final int friendsCount;
   final bool isDark;
   final bool isOwnProfile;
   final FriendStatus? friendStatus;
@@ -22,6 +23,7 @@ class ProfileHeader extends StatelessWidget {
     required this.profile,
     required this.profilePicture,
     required this.postCount,
+    required this.friendsCount,
     required this.isDark,
     required this.isOwnProfile,
     this.friendStatus,
@@ -49,7 +51,7 @@ class ProfileHeader extends StatelessWidget {
       ),
       child: Column(
         children: [
-         GestureDetector(
+          GestureDetector(
             onTap: isOwnProfile ? onChangeProfilePicture : null,
             child: Stack(
               children: [
@@ -141,6 +143,7 @@ class ProfileHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildStatColumn('Posts', postCount.toString(), isDark),
+              _buildStatColumn('Friends', friendsCount.toString(), isDark),
             ],
           ),
           const SizedBox(height: 16),

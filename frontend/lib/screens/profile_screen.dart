@@ -5,26 +5,23 @@ import 'package:provider/provider.dart';
 import '../models/post.dart';
 import '../models/user_profile.dart';
 import '../models/friend_status.dart';
+import '../models/friend_response.dart';
 import '../routes/app_router.dart';
 import '../services/post_service.dart';
 import '../services/profile_picture_service.dart';
 import '../services/user_service.dart';
 import '../services/comment_service.dart';
 import '../services/friend_service.dart';
-import '../services/auth_service.dart';
-import '../services/api_service.dart';
-import '../services/local_storage_service.dart';
 import '../utils/app_color.dart';
 import '../utils/theme_provider.dart';
 import '../utils/logout_utils.dart';
-import '../utils/snackbar_utils.dart';
-import '../widgets/profile_header.dart';
-import '../widgets/post_card.dart';
+import '../widgets/profile/profile_header.dart';
 import '../widgets/create_post_dialog.dart';
+import '../widgets/profile/profile_details_card.dart';
+import '../widgets/profile/profile_friends_grid.dart';
+import '../widgets/profile/profile_posts_section.dart';
 import '../enums/reaction_type.dart';
 import 'edit_profile_page.dart';
-
-
 
 class ProfileScreen extends StatefulWidget {
   final UserService userService;
@@ -53,6 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<Post> _posts = [];
   Uint8List? _profilePicture;
   FriendStatus? _friendStatus;
+  List<FriendResponse> _friends = [];
   bool _isLoading = true;
   String? _error;
   bool _isOwnProfile = false;
@@ -79,11 +77,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ? widget.postService.getUserPosts(widget.userId!)
             : widget.postService.getMyPosts(),
         widget.profilePictureService.getUserProfilePicture(widget.userId),
-
       ];
 
       if (widget.userId != null) {
         futures.add(widget.friendService.getFriendStatus(widget.userId!));
+      }
+
+      if (_isOwnProfile || widget.userId != null) {
+        futures.add(widget.friendService.getAllFriends());
       }
 
       final results = await Future.wait(futures);
@@ -92,9 +93,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _profile = results[0] as UserProfile;
         _posts = results[1] as List<Post>;
         _profilePicture = results[2] as Uint8List?;
+
+        int resultIndex = 3;
         if (widget.userId != null) {
-          _friendStatus = results[3] as FriendStatus;
+          _friendStatus = results[resultIndex] as FriendStatus;
+          resultIndex++;
         }
+
+        if (resultIndex < results.length) {
+          _friends = results[resultIndex] as List<FriendResponse>;
+        }
+
         _isLoading = false;
       });
     } catch (e) {
@@ -164,11 +173,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         }
       });
-      await widget.postService.reactToPost(
-          post.id,
-          reaction.toString()
-      );
-
+      await widget.postService.reactToPost(post.id, reaction.toString());
     } catch (e) {
       _loadProfileData();
       if (mounted) {
@@ -177,6 +182,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       }
     }
+  }
+
+  void _navigateToEditProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditProfilePage(
+          user: _profile!,
+          userService: widget.userService,
+          profilePictureService: widget.profilePictureService,
+        ),
+      ),
+    ).then((_) => _loadProfileData());
   }
 
   @override
@@ -189,9 +207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              context.go(AppRoutes.home);
-            },
+            onPressed: () => context.go(AppRoutes.home),
           ),
           title: const Text('Profile'),
           centerTitle: true,
@@ -205,9 +221,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              context.go(AppRoutes.home);
-            },
+            onPressed: () => context.go(AppRoutes.home),
           ),
           title: const Text('Profile'),
           centerTitle: true,
@@ -232,100 +246,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            context.go(AppRoutes.home);
-          },
+          onPressed: () => context.go(AppRoutes.home),
         ),
         title: const Text('Profile'),
         centerTitle: true,
-        actions: _isOwnProfile
-            ? [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.settings_outlined),
-            color: isDark
-                ? AppColors.darkCardBackground
-                : AppColors.lightCardBackground,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            onSelected: (value) {
-              if (value == 'theme') {
-                themeProvider.toggleTheme();
-              } else if (value == 'blocked') {
-                _navigateToBlockedList();
-              } else if (value == 'logout') {
-                _showLogoutConfirmation();
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'theme',
-                child: Row(
-                  children: [
-                    Icon(
-                      isDark ? Icons.light_mode : Icons.dark_mode,
-                      size: 20,
-                      color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.lightTextPrimary,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      isDark ? 'Light Mode' : 'Dark Mode',
-                      style: TextStyle(
-                        color: isDark
-                            ? AppColors.darkTextPrimary
-                            : AppColors.lightTextPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'blocked',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.block,
-                      size: 20,
-                      color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.lightTextPrimary,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Blocked List',
-                      style: TextStyle(
-                        color: isDark
-                            ? AppColors.darkTextPrimary
-                            : AppColors.lightTextPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
-              PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.logout,
-                      size: 20,
-                      color: AppColors.error,
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Logout',
-                      style: TextStyle(color: AppColors.error),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ]
-            : null,
+        actions: _isOwnProfile ? [_buildSettingsMenu(isDark, themeProvider)] : null,
       ),
       body: RefreshIndicator(
         onRefresh: _loadProfileData,
@@ -337,27 +262,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 profile: _profile,
                 profilePicture: _profilePicture,
                 postCount: _posts.length,
+                friendsCount: _friends.length,
                 isDark: isDark,
                 isOwnProfile: _isOwnProfile,
                 friendStatus: _friendStatus,
-                onEditProfile: _isOwnProfile
-                    ? () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EditProfilePage(
-                        user: _profile!, // بدل user
-                        userService: widget.userService, // بدل _userService
-                        profilePictureService: widget.profilePictureService, // بدل _profilePictureService
-                      ),
-                    ),
-                  );
-                }
-                    : null,
-
-
+                onEditProfile: _isOwnProfile ? _navigateToEditProfile : null,
                 onCreatePost: _isOwnProfile ? _showCreatePostDialog : null,
-
                 onSendFriendRequest:
                 !_isOwnProfile && _friendStatus?.isNone == true
                     ? _sendFriendRequest
@@ -368,7 +278,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     : null,
               ),
               const SizedBox(height: 12),
-              _buildPostsSection(isDark),
+              _buildContentSection(isDark),
             ],
           ),
         ),
@@ -376,17 +286,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _navigateToBlockedList() {
-    context.go(AppRoutes.blocked);
+  Widget _buildSettingsMenu(bool isDark, ThemeProvider themeProvider) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.settings_outlined),
+      color: isDark ? AppColors.darkCardBackground : AppColors.lightCardBackground,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      onSelected: (value) {
+        if (value == 'theme') {
+          themeProvider.toggleTheme();
+        } else if (value == 'blocked') {
+          context.go(AppRoutes.blocked);
+        } else if (value == 'logout') {
+          _showLogoutConfirmation(isDark);
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'theme',
+          child: Row(
+            children: [
+              Icon(
+                isDark ? Icons.light_mode : Icons.dark_mode,
+                size: 20,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                isDark ? 'Light Mode' : 'Dark Mode',
+                style: TextStyle(
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'blocked',
+          child: Row(
+            children: [
+              Icon(
+                Icons.block,
+                size: 20,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Blocked List',
+                style: TextStyle(
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: 'logout',
+          child: Row(
+            children: [
+              const Icon(Icons.logout, size: 20, color: AppColors.error),
+              const SizedBox(width: 12),
+              const Text('Logout', style: TextStyle(color: AppColors.error)),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
-  void _showLogoutConfirmation() {
+  void _showLogoutConfirmation(bool isDark) {
     showDialog(
       context: context,
       builder: (dialogContext) {
-        final isDark =
-            Provider.of<ThemeProvider>(context, listen: false).isDarkMode;
-
         return AlertDialog(
           backgroundColor: isDark
               ? AppColors.darkCardBackground
@@ -394,17 +365,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           title: Text(
             'Logout',
             style: TextStyle(
-              color: isDark
-                  ? AppColors.darkTextPrimary
-                  : AppColors.lightTextPrimary,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
             ),
           ),
           content: Text(
             'Are you sure you want to logout?',
             style: TextStyle(
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
             ),
           ),
           actions: [
@@ -413,9 +380,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Text(
                 'Cancel',
                 style: TextStyle(
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                 ),
               ),
             ),
@@ -424,10 +389,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Navigator.pop(dialogContext);
                 await performLogout(context);
               },
-              child: const Text(
-                'Logout',
-                style: TextStyle(color: AppColors.error),
-              ),
+              child: const Text('Logout', style: TextStyle(color: AppColors.error)),
             ),
           ],
         );
@@ -435,126 +397,93 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildPostsSection(bool isDark) {
+  Widget _buildContentSection(bool isDark) {
     bool canViewPosts = _isOwnProfile || _friendStatus?.isFriends == true;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Text(
-              'Posts',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: isDark
-                    ? AppColors.darkTextPrimary
-                    : AppColors.lightTextPrimary,
-              ),
-            ),
-          ),
-          if (!canViewPosts)
-            _buildPrivateProfileMessage(isDark)
-          else if (_posts.isEmpty)
-            _buildEmptyState(isDark)
-          else
-            _buildPostsList(isDark),
-        ],
-      ),
-    );
-  }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 800;
 
-  Widget _buildPrivateProfileMessage(bool isDark) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          children: [
-            Icon(
-              Icons.lock_outline,
-              size: 64,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+        if (isMobile) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                ProfileDetailsCard(
+                  profile: _profile,
+                  isDark: isDark,
+                  isOwnProfile: _isOwnProfile,
+                  onEditProfile: _navigateToEditProfile,
+                ),
+                const SizedBox(height: 16),
+                ProfileFriendsGrid(
+                  friends: _friends,
+                  isDark: isDark,
+                  userService: widget.userService,
+                  profilePictureService: widget.profilePictureService,
+                ),
+                const SizedBox(height: 16),
+                ProfilePostsSection(
+                  posts: _posts,
+                  isDark: isDark,
+                  canViewPosts: canViewPosts,
+                  profilePicture: _profilePicture,
+                  currentUserEmail: _profile?.email ?? '',
+                  commentService: widget.commentService,
+                  postService: widget.postService,
+                  onReactionSelected: _handleReaction,
+                  onPostUpdated: _loadProfileData,
+                  onPostDeleted: _loadProfileData,
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              'This profile is private',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isDark
-                    ? AppColors.darkTextPrimary
-                    : AppColors.lightTextPrimary,
-              ),
+          );
+        } else {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    children: [
+                      ProfileDetailsCard(
+                        profile: _profile,
+                        isDark: isDark,
+                        isOwnProfile: _isOwnProfile,
+                        onEditProfile: _navigateToEditProfile,
+                      ),
+                      const SizedBox(height: 16),
+                      ProfileFriendsGrid(
+                        friends: _friends,
+                        isDark: isDark,
+                        userService: widget.userService,
+                        profilePictureService: widget.profilePictureService,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: ProfilePostsSection(
+                    posts: _posts,
+                    isDark: isDark,
+                    canViewPosts: canViewPosts,
+                    profilePicture: _profilePicture,
+                    currentUserEmail: _profile?.email ?? '',
+                    commentService: widget.commentService,
+                    postService: widget.postService,
+                    onReactionSelected: _handleReaction,
+                    onPostUpdated: _loadProfileData,
+                    onPostDeleted: _loadProfileData,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Add them as a friend to see their posts',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(bool isDark) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          children: [
-            Icon(
-              Icons.post_add,
-              size: 64,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No posts yet',
-              style: TextStyle(
-                fontSize: 16,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPostsList(bool isDark) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _posts.length,
-      itemBuilder: (context, index) {
-        final post = _posts[index];
-        return PostCard(
-          post: post,
-          isDark: isDark,
-          profilePicture: _profilePicture,
-          currentUserEmail: _profile?.email ?? '',
-          commentService: widget.commentService,
-          postService: widget.postService,
-          onReactionSelected: (reaction) => _handleReaction(post, reaction),
-          onPostUpdated: _loadProfileData,
-          onPostDeleted: _loadProfileData,
-        );
+          );
+        }
       },
     );
   }
