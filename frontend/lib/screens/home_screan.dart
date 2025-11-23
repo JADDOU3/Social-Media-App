@@ -191,9 +191,9 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip: 'Search',
           ),
           IconButton(
-            icon: const Icon(Icons.people_outline),
-            onPressed: () => context.go(AppRoutes.friends),
-            tooltip: 'Friends',
+            icon: const Icon(Icons.person_outline),
+            onPressed: () => context.go(AppRoutes.profile),
+            tooltip: 'Profile',
           ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.settings_outlined),
@@ -206,8 +206,6 @@ class _HomeScreenState extends State<HomeScreen> {
             onSelected: (value) {
               if (value == 'theme') {
                 themeProvider.toggleTheme();
-              } else if (value == 'profile') {
-                context.go(AppRoutes.profile);
               } else if (value == 'friends') {
                 context.go(AppRoutes.friends);
               } else if (value == 'blocked') {
@@ -231,29 +229,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: 12),
                     Text(
                       isDark ? 'Light Mode' : 'Dark Mode',
-                      style: TextStyle(
-                        color: isDark
-                            ? AppColors.darkTextPrimary
-                            : AppColors.lightTextPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'profile',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.person_outline,
-                      size: 20,
-                      color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.lightTextPrimary,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Profile',
                       style: TextStyle(
                         color: isDark
                             ? AppColors.darkTextPrimary
@@ -515,7 +490,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
 }
 
 class UserSearchDelegate extends SearchDelegate<int?> {
@@ -656,9 +630,9 @@ class UserSearchDelegate extends SearchDelegate<int?> {
                     backgroundImage: bytes != null ? MemoryImage(bytes) : null,
                     child: bytes == null
                         ? Text(
-                            user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                          )
+                      user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    )
                         : null,
                   );
                 },
