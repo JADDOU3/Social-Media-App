@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../models/friend_response.dart';
 import '../../services/profile_picture_service.dart';
 import '../../services/user_service.dart';
+import '../../services/friend_service.dart';
 import '../../routes/app_router.dart';
 import '../../utils/app_color.dart';
 
@@ -12,6 +13,8 @@ class ProfileFriendsGrid extends StatelessWidget {
   final bool isDark;
   final UserService userService;
   final ProfilePictureService profilePictureService;
+  final FriendService friendService;
+  final int? viewingUserId;
 
   const ProfileFriendsGrid({
     Key? key,
@@ -19,6 +22,8 @@ class ProfileFriendsGrid extends StatelessWidget {
     required this.isDark,
     required this.userService,
     required this.profilePictureService,
+    required this.friendService,
+    this.viewingUserId,
   }) : super(key: key);
 
   @override
@@ -76,6 +81,7 @@ class ProfileFriendsGrid extends StatelessWidget {
                     }
 
                     final currentUserId = snapshot.data!;
+                    final profileUserId = viewingUserId ?? currentUserId;
 
                     return Column(
                       children: [
@@ -93,7 +99,7 @@ class ProfileFriendsGrid extends StatelessWidget {
                           itemBuilder: (context, index) {
                             final friend = displayFriends[index];
                             return _buildFriendGridItem(
-                                context, friend, currentUserId);
+                                context, friend, profileUserId);
                           },
                         ),
                         if (friends.length > 6)
@@ -151,12 +157,12 @@ class ProfileFriendsGrid extends StatelessWidget {
   }
 
   Widget _buildFriendGridItem(
-      BuildContext context, FriendResponse friend, int currentUserId) {
-    final isCurrentUserSender = currentUserId == friend.senderId;
+      BuildContext context, FriendResponse friend, int profileUserId) {
+    final isProfileUserSender = profileUserId == friend.senderId;
     final friendUserId =
-    isCurrentUserSender ? friend.receiverId : friend.senderId;
+    isProfileUserSender ? friend.receiverId : friend.senderId;
     final friendName =
-    isCurrentUserSender ? friend.receiverName : friend.senderName;
+    isProfileUserSender ? friend.receiverName : friend.senderName;
 
     return GestureDetector(
       onTap: () {
@@ -167,48 +173,42 @@ class ProfileFriendsGrid extends StatelessWidget {
           FutureBuilder<Uint8List?>(
             future: profilePictureService.getUserProfilePicture(friendUserId),
             builder: (context, snapshot) {
-              return Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.3),
-                    width: 2,
-                  ),
-                ),
-                child: ClipOval(
-                  child: snapshot.hasData && snapshot.data != null
-                      ? Image.memory(snapshot.data!, fit: BoxFit.cover)
-                      : Container(
-                    color: isDark
-                        ? AppColors.darkDivider
-                        : AppColors.lightDivider,
-                    child: Icon(
-                      Icons.person,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
-                      size: 30,
-                    ),
-                  ),
+              return CircleAvatar(
+                radius: 30,
+                backgroundColor: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+                backgroundImage:
+                snapshot.hasData && snapshot.data != null
+                    ? MemoryImage(snapshot.data!)
+                    : null,
+                child: snapshot.hasData && snapshot.data != null
+                    ? null
+                    : Icon(
+                  Icons.person,
+                  size: 30,
+                  color: isDark
+                      ? AppColors.darkBackground
+                      : AppColors.lightBackground,
                 ),
               );
             },
           ),
           const SizedBox(height: 8),
-          Text(
-            friendName,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: isDark
-                  ? AppColors.darkTextPrimary
-                  : AppColors.lightTextPrimary,
+          Expanded(
+            child: Text(
+              friendName,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isDark
+                    ? AppColors.darkTextPrimary
+                    : AppColors.lightTextPrimary,
+              ),
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 2,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

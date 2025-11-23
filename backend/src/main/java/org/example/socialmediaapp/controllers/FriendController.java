@@ -67,6 +67,12 @@ public class FriendController {
         return ResponseEntity.ok(friends);
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<FriendResponse>> getUserFriends(@PathVariable int userId) {
+        List<FriendResponse> friends = friendService.getAllFriends(userId);
+        return ResponseEntity.ok(friends);
+    }
+
     @GetMapping("/blocked")
     public ResponseEntity<List<FriendResponse>> getBlockedUsers() {
         List<FriendResponse> blockedUsers = friendService.getBlockedUsers();

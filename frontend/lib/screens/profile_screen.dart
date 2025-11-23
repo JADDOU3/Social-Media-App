@@ -81,9 +81,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (widget.userId != null) {
         futures.add(widget.friendService.getFriendStatus(widget.userId!));
-      }
-
-      if (_isOwnProfile || widget.userId != null) {
+        futures.add(widget.friendService.getUserFriends(widget.userId!));
+      } else {
         futures.add(widget.friendService.getAllFriends());
       }
 
@@ -98,9 +97,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (widget.userId != null) {
           _friendStatus = results[resultIndex] as FriendStatus;
           resultIndex++;
-        }
-
-        if (resultIndex < results.length) {
+          _friends = results[resultIndex] as List<FriendResponse>;
+        } else {
           _friends = results[resultIndex] as List<FriendResponse>;
         }
 
@@ -421,6 +419,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   isDark: isDark,
                   userService: widget.userService,
                   profilePictureService: widget.profilePictureService,
+                  friendService: widget.friendService,
+                  viewingUserId: widget.userId,
                 ),
                 const SizedBox(height: 16),
                 ProfilePostsSection(
@@ -460,6 +460,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         isDark: isDark,
                         userService: widget.userService,
                         profilePictureService: widget.profilePictureService,
+                        friendService: widget.friendService,
+                        viewingUserId: widget.userId,
                       ),
                     ],
                   ),
@@ -487,4 +489,5 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
   }
+
 }

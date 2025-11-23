@@ -195,9 +195,6 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
     final userName = blockedUser.receiverName.isNotEmpty
         ? blockedUser.receiverName
         : blockedUser.senderName;
-    final userEmail = blockedUser.receiverEmail.isNotEmpty
-        ? blockedUser.receiverEmail
-        : blockedUser.senderEmail;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -219,14 +216,6 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
             color: isDark
                 ? AppColors.darkTextPrimary
                 : AppColors.lightTextPrimary,
-          ),
-        ),
-        subtitle: Text(
-          userEmail,
-          style: TextStyle(
-            color: isDark
-                ? AppColors.darkTextSecondary
-                : AppColors.lightTextSecondary,
           ),
         ),
         trailing: ElevatedButton(

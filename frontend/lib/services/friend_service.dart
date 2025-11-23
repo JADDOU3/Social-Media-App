@@ -54,6 +54,19 @@ class FriendService {
         .toList();
   }
 
+  Future<List<FriendResponse>> getUserFriends(int userId) async {
+    try {
+      final response = await _apiService.get('/friends/user/$userId');
+
+      return (response as List)
+          .map((json) => FriendResponse.fromJson(json))
+          .toList();
+    } catch (e) {
+      print('Error in getUserFriends($userId): $e');
+      rethrow;
+    }
+  }
+
   Future<List<FriendResponse>> getBlockedUsers() async {
     final response = await _apiService.get('/friends/blocked');
     return (response as List)
