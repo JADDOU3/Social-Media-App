@@ -1,20 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import '../models/friend_response.dart';
-import '../routes/app_router.dart';
 import '../services/friend_service.dart';
 import '../utils/app_color.dart';
-import '../utils/theme_provider.dart';
 
 class BlockedUsersScreen extends StatefulWidget {
   final FriendService friendService;
-
-  const BlockedUsersScreen({
-    Key? key,
-    required this.friendService,
-  }) : super(key: key);
-
+  const BlockedUsersScreen({Key? key, required this.friendService}) : super(key: key);
   @override
   State<BlockedUsersScreen> createState() => _BlockedUsersScreenState();
 }
@@ -35,7 +27,6 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
       _isLoading = true;
       _error = null;
     });
-
     try {
       final blockedUsers = await widget.friendService.getBlockedUsers();
       setState(() {
@@ -57,32 +48,21 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
         title: const Text('Unblock User'),
         content: Text('Are you sure you want to unblock $userName?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Unblock', style: TextStyle(color: AppColors.success)),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Unblock', style: TextStyle(color: AppColors.success))),
         ],
       ),
     );
-
     if (confirmed == true) {
       try {
         await widget.friendService.unblockUser(friendshipId);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('User unblocked')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User unblocked')));
           _loadBlockedUsers();
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to unblock: ${e.toString()}')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to unblock: ${e.toString()}')));
         }
       }
     }
@@ -90,140 +70,69 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.isDarkMode;
-
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(AppRoutes.home),
-        ),
+        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/home')),
         title: const Text('Blocked Users'),
         centerTitle: true,
       ),
-      body: _buildBody(isDark),
+      body: _buildBody(),
     );
   }
 
-  Widget _buildBody(bool isDark) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
+  Widget _buildBody() {
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: AppColors.error,
-            ),
+            Icon(Icons.error_outline, size: 64, color: AppColors.error),
             const SizedBox(height: 16),
-            Text(
-              'Error loading blocked users',
-              style: TextStyle(
-                fontSize: 16,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
-              ),
-            ),
+            const Text('Error loading blocked users', style: TextStyle(fontSize: 16, color: Colors.grey)),
             const SizedBox(height: 8),
-            Text(
-              _error!,
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            Text(_error!, style: const TextStyle(fontSize: 12, color: Colors.grey), textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadBlockedUsers,
-              child: const Text('Retry'),
-            ),
+            ElevatedButton(onPressed: _loadBlockedUsers, child: const Text('Retry')),
           ],
         ),
       );
     }
-
     if (_blockedUsers.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.block,
-              size: 64,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No blocked users',
-              style: TextStyle(
-                fontSize: 16,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
-              ),
-            ),
+            Icon(Icons.block, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('No blocked users', style: TextStyle(fontSize: 16, color: Colors.grey)),
           ],
         ),
       );
     }
-
     return RefreshIndicator(
       onRefresh: _loadBlockedUsers,
       child: ListView.builder(
         itemCount: _blockedUsers.length,
         itemBuilder: (context, index) {
           final blockedUser = _blockedUsers[index];
-          return _buildBlockedUserCard(blockedUser, isDark);
+          return _buildBlockedUserCard(blockedUser);
         },
       ),
     );
   }
 
-  Widget _buildBlockedUserCard(FriendResponse blockedUser, bool isDark) {
-    final userName = blockedUser.receiverName.isNotEmpty
-        ? blockedUser.receiverName
-        : blockedUser.senderName;
-
+  Widget _buildBlockedUserCard(FriendResponse blockedUser) {
+    final userName = blockedUser.receiverName;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: isDark
-          ? AppColors.darkCardBackground
-          : AppColors.lightCardBackground,
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: AppColors.error.withOpacity(0.2),
-          child: Icon(
-            Icons.block,
-            color: AppColors.error,
-          ),
-        ),
-        title: Text(
-          userName,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: isDark
-                ? AppColors.darkTextPrimary
-                : AppColors.lightTextPrimary,
-          ),
-        ),
+        leading: CircleAvatar(backgroundColor: AppColors.error.withOpacity(0.2), child: Icon(Icons.block, color: AppColors.error)),
+        title: Text(userName, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text('Friendship ID: ${blockedUser.id}'),
         trailing: ElevatedButton(
           onPressed: () => _unblockUser(blockedUser.id, userName),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.success,
-            foregroundColor: Colors.white,
-          ),
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.success, foregroundColor: Colors.white),
           child: const Text('Unblock'),
         ),
       ),
