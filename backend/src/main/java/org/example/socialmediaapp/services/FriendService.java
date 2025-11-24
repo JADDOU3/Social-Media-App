@@ -93,7 +93,7 @@
         public List<FriendResponse> getSentFriendRequests(){
             User user = SecurityUtils.getCurrentUser();
             //only find by user1 ( the sender )
-            List<Friend> friendRequests = friendRepo.findByUser1AndRequestStatus(user, RequestStatus.REQUESTED);
+            List<Friend> friendRequests = friendRepo.findByUser1AndRequestStatusOrderByIdDesc(user, RequestStatus.REQUESTED);
             return friendRequests.stream()
                     .map(this::convertToResponse)
                     .toList();
@@ -102,19 +102,17 @@
         public List<FriendResponse> getReceiverFriendRequests(){
             User user = SecurityUtils.getCurrentUser();
             //only find by user2 ( the receiver )
-            List<Friend> friendRequests = friendRepo.findByUser2AndRequestStatus(user, RequestStatus.REQUESTED);
+            List<Friend> friendRequests = friendRepo.findByUser2AndRequestStatusOrderByIdDesc(user, RequestStatus.REQUESTED);
             return friendRequests.stream()
                     .map(this::convertToResponse)
                     .toList();
         }
-    
+
         public List<FriendResponse> getAllFriends(int id){
-            User user =  userRepo.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
-            List<Friend> friendsAsUser1 = friendRepo.findByUser1AndRequestStatus(user, RequestStatus.APPROVED);
-            List<Friend> friendsAsUser2 = friendRepo.findByUser2AndRequestStatus(user, RequestStatus.APPROVED);
-            List<Friend> allFriends = new ArrayList<>(friendsAsUser1);
-            allFriends.addAll(friendsAsUser2);
-            allFriends.removeIf(friend -> friend.isBlocked());
+            User user = userRepo.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+
+            List<Friend> allFriends = friendRepo.findAllFriendsByUserAndStatusOrderByIdDesc(user, RequestStatus.APPROVED);
+
             return allFriends.stream()
                     .map(this::convertToResponse)
                     .toList();
@@ -122,7 +120,7 @@
 
         public List<FriendResponse> getBlockedUsers(){
             User user = SecurityUtils.getCurrentUser();
-            List<Friend> blockedUsers = friendRepo.findByUser1AndIsBlockedTrue(user);
+            List<Friend> blockedUsers = friendRepo.findByUser1AndIsBlockedTrueOrderByIdDesc(user);
 
             return blockedUsers.stream()
                     .map(this::convertToResponse)
@@ -155,8 +153,8 @@
     
         public List<User> findUsersByName(String name){
             User user = SecurityUtils.getCurrentUser();
-            List<Friend> friendsAsUser1 = friendRepo.findByUser1AndRequestStatus(user, RequestStatus.APPROVED);
-            List<Friend> friendsAsUser2 = friendRepo.findByUser2AndRequestStatus(user, RequestStatus.APPROVED);
+            List<Friend> friendsAsUser1 = friendRepo.findByUser1AndRequestStatusOrderByIdDesc(user, RequestStatus.APPROVED);
+            List<Friend> friendsAsUser2 = friendRepo.findByUser2AndRequestStatusOrderByIdDesc(user, RequestStatus.APPROVED);
             List<Friend> allFriends = new ArrayList<>(friendsAsUser1);
             allFriends.addAll(friendsAsUser2);
             allFriends.removeIf(friend -> {

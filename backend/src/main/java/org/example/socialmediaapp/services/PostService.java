@@ -217,9 +217,9 @@ public class PostService {
         User currentUser = userRepo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<Friend> friendshipsAsUser1 = friendRepo.findByUser1AndRequestStatus(
+        List<Friend> friendshipsAsUser1 = friendRepo.findByUser1AndRequestStatusOrderByIdDesc(
                 currentUser, RequestStatus.APPROVED);
-        List<Friend> friendshipsAsUser2 = friendRepo.findByUser2AndRequestStatus(
+        List<Friend> friendshipsAsUser2 = friendRepo.findByUser2AndRequestStatusOrderByIdDesc(
                 currentUser, RequestStatus.APPROVED);
 
         List<User> friends = new ArrayList<>();
