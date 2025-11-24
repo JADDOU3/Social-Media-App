@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_color.dart';
+import 'image_viewer.dart';
 
 class PostImageGrid extends StatelessWidget {
   final List<String> imageUrls;
@@ -13,57 +14,22 @@ class PostImageGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (imageUrls.length == 2) {
-      return _buildTwoImages();
-    } else if (imageUrls.length == 3) {
-      return _buildThreeImages();
-    } else {
-      return _buildGridImages();
-    }
-  }
+    if (imageUrls.isEmpty) return const SizedBox.shrink();
 
-  Widget _buildTwoImages() {
-    return Row(
-      children: imageUrls
-          .map((url) => Expanded(
+    if (imageUrls.length == 1) {
+      return GestureDetector(
+        onTap: () => _openImageViewer(context, 0),
         child: Image.network(
-          url,
-          height: 250,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              height: 250,
-              color: isDark
-                  ? AppColors.darkShimmer
-                  : AppColors.lightShimmer,
-              child: Icon(
-                Icons.broken_image,
-                color: isDark
-                    ? AppColors.darkTextLight
-                    : AppColors.lightTextLight,
-              ),
-            );
-          },
-        ),
-      ))
-          .toList(),
-    );
-  }
-
-  Widget _buildThreeImages() {
-    return Column(
-      children: [
-        Image.network(
           imageUrls[0],
           width: double.infinity,
-          height: 250,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             return Container(
-              height: 250,
+              height: 200,
               color: isDark ? AppColors.darkShimmer : AppColors.lightShimmer,
               child: Icon(
                 Icons.broken_image,
+                size: 50,
                 color: isDark
                     ? AppColors.darkTextLight
                     : AppColors.lightTextLight,
@@ -71,18 +37,29 @@ class PostImageGrid extends StatelessWidget {
             );
           },
         ),
-        Row(
-          children: [
-            Expanded(
+      );
+    }
+    return _buildImageWithOverlay(context);
+  }
+
+  Widget _buildImageWithOverlay(BuildContext context) {
+    return SizedBox(
+      height: 250,
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _openImageViewer(context, 0),
               child: Image.network(
-                imageUrls[1],
-                height: 150,
+                imageUrls[0],
+                height: 250,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    height: 150,
-                    color:
-                    isDark ? AppColors.darkShimmer : AppColors.lightShimmer,
+                    height: 250,
+                    color: isDark
+                        ? AppColors.darkShimmer
+                        : AppColors.lightShimmer,
                     child: Icon(
                       Icons.broken_image,
                       color: isDark
@@ -93,95 +70,68 @@ class PostImageGrid extends StatelessWidget {
                 },
               ),
             ),
-            Expanded(
-              child: Image.network(
-                imageUrls[2],
-                height: 150,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 150,
-                    color:
-                    isDark ? AppColors.darkShimmer : AppColors.lightShimmer,
-                    child: Icon(
-                      Icons.broken_image,
-                      color: isDark
-                          ? AppColors.darkTextLight
-                          : AppColors.lightTextLight,
+          ),
+          const SizedBox(width: 2),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _openImageViewer(context, 1),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    imageUrls[1],
+                    height: 250,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 250,
+                        color: isDark
+                            ? AppColors.darkShimmer
+                            : AppColors.lightShimmer,
+                        child: Icon(
+                          Icons.broken_image,
+                          color: isDark
+                              ? AppColors.darkTextLight
+                              : AppColors.lightTextLight,
+                        ),
+                      );
+                    },
+                  ),
+                  if (imageUrls.length > 2)
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '+${imageUrls.length - 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 36,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
-                  );
-                },
+                ],
               ),
             ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildGridImages() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 2,
-        mainAxisSpacing: 2,
+  void _openImageViewer(BuildContext context, int initialIndex) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ImageViewerScreen(
+          imageUrls: imageUrls,
+          initialIndex: initialIndex,
+          isDark: isDark,
+        ),
       ),
-      itemCount: imageUrls.length > 4 ? 4 : imageUrls.length,
-      itemBuilder: (context, index) {
-        if (index == 3 && imageUrls.length > 4) {
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.network(
-                imageUrls[index],
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color:
-                    isDark ? AppColors.darkShimmer : AppColors.lightShimmer,
-                    child: Icon(
-                      Icons.broken_image,
-                      color: isDark
-                          ? AppColors.darkTextLight
-                          : AppColors.lightTextLight,
-                    ),
-                  );
-                },
-              ),
-              Container(
-                color: Colors.black54,
-                child: Center(
-                  child: Text(
-                    '+${imageUrls.length - 4}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }
-        return Image.network(
-          imageUrls[index],
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              color: isDark ? AppColors.darkShimmer : AppColors.lightShimmer,
-              child: Icon(
-                Icons.broken_image,
-                color: isDark
-                    ? AppColors.darkTextLight
-                    : AppColors.lightTextLight,
-              ),
-            );
-          },
-        );
-      },
     );
   }
 }
+
