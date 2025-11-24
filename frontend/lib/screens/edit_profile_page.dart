@@ -167,9 +167,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.lightCardBackground,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             Icon(Icons.warning_amber_rounded, color: AppColors.error),
@@ -185,10 +183,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
         content: Text(
           "Are you sure you want to remove your profile picture?",
-          style: TextStyle(
-            color: AppColors.lightTextSecondary,
-            fontSize: 16,
-          ),
+          style: TextStyle(color: AppColors.lightTextSecondary, fontSize: 16),
         ),
         actions: [
           TextButton(
@@ -277,7 +272,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
       if (_profileImageChanged) {
         try {
           if (_profileImageDeleted) {
-            if (user.profilePicture != null && user.profilePicture!.isNotEmpty) {
+            if (user.profilePicture != null &&
+                user.profilePicture!.isNotEmpty) {
               try {
                 await profilePictureService.deleteProfilePicture();
               } catch (e) {
@@ -287,7 +283,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
               }
             }
           } else if (_newImageBytes != null && _newImageFilename != null) {
-            if (user.profilePicture != null && user.profilePicture!.isNotEmpty) {
+            if (user.profilePicture != null &&
+                user.profilePicture!.isNotEmpty) {
               try {
                 await profilePictureService.updateProfilePicture(
                   _newImageBytes!,
@@ -328,8 +325,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
         email: emailController.text.isNotEmpty ? emailController.text : null,
         bio: bioController.text.isNotEmpty ? bioController.text : null,
         job: jobController.text.isNotEmpty ? jobController.text : null,
-        location: locationController.text.isNotEmpty ? locationController.text : null,
-        phoneNumber: phoneController.text.isNotEmpty ? phoneController.text : null,
+        location: locationController.text.isNotEmpty
+            ? locationController.text
+            : null,
+        phoneNumber: phoneController.text.isNotEmpty
+            ? phoneController.text
+            : null,
         gender: genderValue,
         dateOfBirth: dateOfBirthController.text.isNotEmpty
             ? dateOfBirthController.text
@@ -399,161 +400,204 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
             ],
           ),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // OLD PASSWORD
-                  TextFormField(
-                    controller: oldPasswordController,
-                    obscureText: obscureOld,
-                    style: TextStyle(color: AppColors.lightTextPrimary),
-                    decoration: InputDecoration(
-                      labelText: "Current Password",
-                      labelStyle: TextStyle(color: AppColors.lightTextSecondary),
-                      prefixIcon: Icon(Icons.lock_outline, color: AppColors.primary),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          obscureOld ? Icons.visibility_off : Icons.visibility,
+          content: SizedBox(
+            width: 400,
+            child: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // OLD PASSWORD
+                    TextFormField(
+                      controller: oldPasswordController,
+                      obscureText: obscureOld,
+                      style: TextStyle(color: AppColors.lightTextPrimary),
+                      decoration: InputDecoration(
+                        labelText: "Current Password",
+                        labelStyle: TextStyle(
                           color: AppColors.lightTextSecondary,
                         ),
-                        onPressed: () => setDialogState(() => obscureOld = !obscureOld),
+                        prefixIcon: Icon(
+                          Icons.lock_outline,
+                          color: AppColors.primary,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscureOld
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: AppColors.lightTextSecondary,
+                          ),
+                          onPressed: () =>
+                              setDialogState(() => obscureOld = !obscureOld),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.lightDivider),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.lightDivider),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.error),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AppColors.error,
+                            width: 2,
+                          ),
+                        ),
                       ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.lightDivider),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.lightDivider),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.primary, width: 2),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.error),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.error, width: 2),
-                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Please enter your current password";
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please enter your current password";
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // NEW PASSWORD
-                  TextFormField(
-                    controller: newPasswordController,
-                    obscureText: obscureNew,
-                    style: TextStyle(color: AppColors.lightTextPrimary),
-                    decoration: InputDecoration(
-                      labelText: "New Password",
-                      labelStyle: TextStyle(color: AppColors.lightTextSecondary),
-                      prefixIcon: Icon(Icons.lock, color: AppColors.primary),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          obscureNew ? Icons.visibility_off : Icons.visibility,
+                    // NEW PASSWORD
+                    TextFormField(
+                      controller: newPasswordController,
+                      obscureText: obscureNew,
+                      style: TextStyle(color: AppColors.lightTextPrimary),
+                      decoration: InputDecoration(
+                        labelText: "New Password",
+                        labelStyle: TextStyle(
                           color: AppColors.lightTextSecondary,
                         ),
-                        onPressed: () => setDialogState(() => obscureNew = !obscureNew),
+                        prefixIcon: Icon(Icons.lock, color: AppColors.primary),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscureNew
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: AppColors.lightTextSecondary,
+                          ),
+                          onPressed: () =>
+                              setDialogState(() => obscureNew = !obscureNew),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.lightDivider),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.lightDivider),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.error),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AppColors.error,
+                            width: 2,
+                          ),
+                        ),
                       ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.lightDivider),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.lightDivider),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.primary, width: 2),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.error),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.error, width: 2),
-                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Please enter a new password";
+                        }
+                        if (value.length < 6) {
+                          return "Password must be at least 6 characters";
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please enter a new password";
-                      }
-                      if (value.length < 6) {
-                        return "Password must be at least 6 characters";
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // CONFIRM NEW PASSWORD
-                  TextFormField(
-                    controller: confirmPasswordController,
-                    obscureText: obscureConfirm,
-                    style: TextStyle(color: AppColors.lightTextPrimary),
-                    decoration: InputDecoration(
-                      labelText: "Confirm New Password",
-                      labelStyle: TextStyle(color: AppColors.lightTextSecondary),
-                      prefixIcon: Icon(Icons.lock_clock, color: AppColors.primary),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          obscureConfirm ? Icons.visibility_off : Icons.visibility,
+                    // CONFIRM NEW PASSWORD
+                    TextFormField(
+                      controller: confirmPasswordController,
+                      obscureText: obscureConfirm,
+                      style: TextStyle(color: AppColors.lightTextPrimary),
+                      decoration: InputDecoration(
+                        labelText: "Confirm New Password",
+                        labelStyle: TextStyle(
                           color: AppColors.lightTextSecondary,
                         ),
-                        onPressed: () => setDialogState(() => obscureConfirm = !obscureConfirm),
+                        prefixIcon: Icon(
+                          Icons.lock_clock,
+                          color: AppColors.primary,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscureConfirm
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: AppColors.lightTextSecondary,
+                          ),
+                          onPressed: () => setDialogState(
+                            () => obscureConfirm = !obscureConfirm,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.lightDivider),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.lightDivider),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.error),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AppColors.error,
+                            width: 2,
+                          ),
+                        ),
                       ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.lightDivider),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.lightDivider),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.primary, width: 2),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.error),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.error, width: 2),
-                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Please confirm your new password";
+                        }
+                        if (value != newPasswordController.text) {
+                          return "Passwords do not match";
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please confirm your new password";
-                      }
-                      if (value != newPasswordController.text) {
-                        return "Passwords do not match";
-                      }
-                      return null;
-                    },
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -572,90 +616,102 @@ class _EditProfilePageState extends State<EditProfilePage> {
               onPressed: isLoading
                   ? null
                   : () async {
-                if (!formKey.currentState!.validate()) return;
+                      if (!formKey.currentState!.validate()) return;
 
-                setDialogState(() => isLoading = true);
+                      setDialogState(() => isLoading = true);
 
-                try {
-                  await userService.changePassword(
-                    oldPassword: oldPasswordController.text,
-                    newPassword: newPasswordController.text,
-                  );
+                      try {
+                        await userService.changePassword(
+                          oldPassword: oldPasswordController.text,
+                          newPassword: newPasswordController.text,
+                        );
 
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text("Password changed successfully"),
-                        backgroundColor: AppColors.success,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  setDialogState(() => isLoading = false);
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        backgroundColor: AppColors.lightCardBackground,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        title: Row(
-                          children: [
-                            Icon(Icons.error_outline, color: AppColors.error, size: 28),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                "Error",
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                "Password changed successfully",
+                              ),
+                              backgroundColor: AppColors.success,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setDialogState(() => isLoading = false);
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              backgroundColor: AppColors.lightCardBackground,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              title: Row(
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    color: AppColors.error,
+                                    size: 28,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      "Error",
+                                      style: TextStyle(
+                                        color: AppColors.lightTextPrimary,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              content: Text(
+                                e
+                                    .toString()
+                                    .replaceAll('Exception: ', '')
+                                    .replaceAll(
+                                      'Failed to change password: ',
+                                      '',
+                                    ),
                                 style: TextStyle(
-                                  color: AppColors.lightTextPrimary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20,
+                                  color: AppColors.lightTextSecondary,
+                                  fontSize: 16,
                                 ),
                               ),
+                              actions: [
+                                ElevatedButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.error,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 12,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    "OK",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        content: Text(
-                          e.toString().replaceAll('Exception: ', '').replaceAll('Failed to change password: ', ''),
-                          style: TextStyle(
-                            color: AppColors.lightTextSecondary,
-                            fontSize: 16,
-                          ),
-                        ),
-                        actions: [
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(context),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.error,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                            ),
-                            child: const Text(
-                              "OK",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                }
-              },
+                          );
+                        }
+                      }
+                    },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(
@@ -664,20 +720,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
               child: isLoading
                   ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
                   : const Text(
-                "Change Password",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+                      "Change Password",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           ],
         ),
@@ -692,10 +748,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       appBar: AppBar(
         title: const Text(
           "Edit Profile",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppColors.primary,
         elevation: 0,
@@ -772,13 +825,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   ),
                                   onTap: () {
                                     Navigator.pop(context);
-                                    Future.delayed(Duration(milliseconds: 150), () {
-                                      _removeProfilePicture();
-                                    });
+                                    Future.delayed(
+                                      Duration(milliseconds: 150),
+                                      () {
+                                        _removeProfilePicture();
+                                      },
+                                    );
                                   },
-
                                 ),
-                                if (_profileImage != null || _newImageBytes != null || _currentProfileImageBytes != null)
+                                if (_profileImage != null ||
+                                    _newImageBytes != null ||
+                                    _currentProfileImageBytes != null)
                                   ListTile(
                                     leading: const Icon(
                                       Icons.delete,
@@ -818,26 +875,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 height: 120,
                                 child: _isLoadingImage
                                     ? Container(
-                                  color: AppColors.lightBackground,
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      color: AppColors.primary,
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                )
+                                        color: AppColors.lightBackground,
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            color: AppColors.primary,
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                      )
                                     : (_newImageBytes != null
-                                    ? Image.memory(_newImageBytes!, fit: BoxFit.cover)
-                                    : (_currentProfileImageBytes != null
-                                    ? Image.memory(_currentProfileImageBytes!, fit: BoxFit.cover)
-                                    : Container(
-                                  color: AppColors.lightBackground,
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 60,
-                                    color: AppColors.lightTextSecondary,
-                                  ),
-                                ))),
+                                          ? Image.memory(
+                                              _newImageBytes!,
+                                              fit: BoxFit.cover,
+                                            )
+                                          : (_currentProfileImageBytes != null
+                                                ? Image.memory(
+                                                    _currentProfileImageBytes!,
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                : Container(
+                                                    color: AppColors
+                                                        .lightBackground,
+                                                    child: Icon(
+                                                      Icons.person,
+                                                      size: 60,
+                                                      color: AppColors
+                                                          .lightTextSecondary,
+                                                    ),
+                                                  ))),
                               ),
                             ),
                           ),
@@ -930,7 +995,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       icon: Icons.wc_outlined,
                       items: const [
                         DropdownMenuItem(value: "Male", child: Text("Male")),
-                        DropdownMenuItem(value: "Female", child: Text("Female")),
+                        DropdownMenuItem(
+                          value: "Female",
+                          child: Text("Female"),
+                        ),
                       ],
                       onChanged: (value) => setState(() => genderValue = value),
                     ),
@@ -942,11 +1010,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       label: "Social Situation",
                       icon: Icons.favorite_outline,
                       items: const [
-                        DropdownMenuItem(value: "Single", child: Text("Single")),
-                        DropdownMenuItem(value: "Married", child: Text("Married")),
-                        DropdownMenuItem(value: "Divorced", child: Text("Divorced")),
+                        DropdownMenuItem(
+                          value: "Single",
+                          child: Text("Single"),
+                        ),
+                        DropdownMenuItem(
+                          value: "Married",
+                          child: Text("Married"),
+                        ),
+                        DropdownMenuItem(
+                          value: "Divorced",
+                          child: Text("Divorced"),
+                        ),
                       ],
-                      onChanged: (value) => setState(() => socialSituationValue = value),
+                      onChanged: (value) =>
+                          setState(() => socialSituationValue = value),
                     ),
                     const SizedBox(height: 16),
 
@@ -972,7 +1050,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           ),
                           side: BorderSide(color: AppColors.primary, width: 2),
                         ),
-                        icon: Icon(Icons.lock_outline, color: AppColors.primary),
+                        icon: Icon(
+                          Icons.lock_outline,
+                          color: AppColors.primary,
+                        ),
                         label: Text(
                           "Change Password",
                           style: TextStyle(
@@ -1000,21 +1081,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         ),
                         child: _isSaving
                             ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : const Text(
-                          "Save Changes",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                                "Save Changes",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -1045,13 +1126,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
       enabled: enabled,
       onTap: onTap,
       style: TextStyle(
-        color: enabled ? AppColors.lightTextPrimary : AppColors.lightTextSecondary,
+        color: enabled
+            ? AppColors.lightTextPrimary
+            : AppColors.lightTextSecondary,
       ),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(
-          color: AppColors.lightTextSecondary,
-        ),
+        labelStyle: TextStyle(color: AppColors.lightTextSecondary),
         prefixIcon: Icon(
           icon,
           color: enabled ? AppColors.primary : AppColors.lightTextLight,
@@ -1074,7 +1155,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: AppColors.lightDivider),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
     );
   }
@@ -1090,13 +1174,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
       value: value,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(
-          color: AppColors.lightTextSecondary,
-        ),
-        prefixIcon: Icon(
-          icon,
-          color: AppColors.primary,
-        ),
+        labelStyle: TextStyle(color: AppColors.lightTextSecondary),
+        prefixIcon: Icon(icon, color: AppColors.primary),
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
@@ -1111,7 +1190,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: AppColors.primary, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
       items: items,
       onChanged: onChanged,
