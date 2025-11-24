@@ -17,7 +17,6 @@ class PostCard extends StatefulWidget {
   final String currentUserEmail;
   final CommentService? commentService;
   final PostService? postService;
-  final Function(ReactionType)? onReactionSelected;
   final VoidCallback? onPostUpdated;
   final VoidCallback? onPostDeleted;
 
@@ -29,7 +28,6 @@ class PostCard extends StatefulWidget {
     required this.currentUserEmail,
     this.commentService,
     this.postService,
-    this.onReactionSelected,
     this.onPostUpdated,
     this.onPostDeleted,
   }) : super(key: key);
@@ -40,6 +38,88 @@ class PostCard extends StatefulWidget {
 
 class _PostCardState extends State<PostCard> {
   bool _showComments = false;
+  late ReactionType? _currentReaction;
+  late Map<String, int> _reactionCounts;
+  bool _isUpdatingReaction = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentReaction = widget.post.currentReactionType;
+    _reactionCounts = Map<String, int>.from(widget.post.reactionCounts ?? {});
+  }
+
+  @override
+  void didUpdateWidget(PostCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.post.id != widget.post.id) {
+      _currentReaction = widget.post.currentReactionType;
+      _reactionCounts = Map<String, int>.from(widget.post.reactionCounts ?? {});
+    }
+  }
+
+  Future<void> _handleReactionSelected(ReactionType newReaction) async {
+    if (_isUpdatingReaction) return;
+
+    setState(() {
+      _isUpdatingReaction = true;
+    });
+
+    final oldReaction = _currentReaction;
+    final oldCounts = Map<String, int>.from(_reactionCounts);
+
+    setState(() {
+      if (_currentReaction != null) {
+        final oldKey = _currentReaction!.name.toUpperCase();
+        _reactionCounts[oldKey] = (_reactionCounts[oldKey] ?? 1) - 1;
+        if (_reactionCounts[oldKey]! <= 0) {
+          _reactionCounts.remove(oldKey);
+        }
+      }
+
+      if (_currentReaction == newReaction) {
+        _currentReaction = null;
+      } else {
+        final newKey = newReaction.name.toUpperCase();
+        _reactionCounts[newKey] = (_reactionCounts[newKey] ?? 0) + 1;
+        _currentReaction = newReaction;
+      }
+    });
+
+    try {
+      if (widget.postService != null) {
+        if (_currentReaction == null) {
+          await widget.postService!.removeReaction(widget.post.id);
+        } else {
+          await widget.postService!.reactToPost(
+            widget.post.id,
+            _currentReaction!,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _currentReaction = oldReaction;
+          _reactionCounts = oldCounts;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update reaction: $e'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUpdatingReaction = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -393,42 +473,19 @@ class _PostCardState extends State<PostCard> {
   }
 
   Widget _buildImages() {
-    if (widget.post.imageUrls.length == 1) {
-      return Image.network(
-        widget.post.imageUrls[0],
-        width: double.infinity,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            height: 200,
-            color: widget.isDark
-                ? AppColors.darkShimmer
-                : AppColors.lightShimmer,
-            child: Icon(
-              Icons.broken_image,
-              size: 50,
-              color: widget.isDark
-                  ? AppColors.darkTextLight
-                  : AppColors.lightTextLight,
-            ),
-          );
-        },
-      );
-    }
-    return PostImageGrid(imageUrls: widget.post.imageUrls, isDark: widget.isDark);
+    return PostImageGrid(
+        imageUrls: widget.post.imageUrls,
+        isDark: widget.isDark
+    );
   }
 
   Widget _buildActions() {
     int totalReactions = 0;
-    if (widget.post.reactionCounts != null) {
-      totalReactions = widget.post.reactionCounts!.values.fold(0, (sum, count) => sum + count);
+    if (_reactionCounts.isNotEmpty) {
+      totalReactions = _reactionCounts.values.fold(0, (sum, count) => sum + count);
     }
 
     int commentCount = widget.post.commentCount ?? 0;
-    if (widget.post.reactionCounts != null) {
-      totalReactions = widget.post.reactionCounts!.values.fold(0, (sum, count) => sum + count);
-    }
-
 
     return Column(
       children: [
@@ -489,8 +546,8 @@ class _PostCardState extends State<PostCard> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               ReactionButton(
-                currentReaction: widget.post.currentReactionType,
-                onReactionSelected: widget.onReactionSelected ?? (reaction) {},
+                currentReaction: _currentReaction,
+                onReactionSelected: _handleReactionSelected,
                 isDark: widget.isDark,
               ),
               _buildActionButton(
@@ -510,13 +567,13 @@ class _PostCardState extends State<PostCard> {
   }
 
   List<Widget> _buildReactionIcons() {
-    if (widget.post.reactionCounts == null) return [];
+    if (_reactionCounts.isEmpty) return [];
 
     List<Widget> icons = [];
 
     final activeReactions = <MapEntry<ReactionType, int>>[];
 
-    for (var entry in widget.post.reactionCounts!.entries) {
+    for (var entry in _reactionCounts.entries) {
       if (entry.value > 0) {
         try {
           final reactionType = ReactionType.values.firstWhere(

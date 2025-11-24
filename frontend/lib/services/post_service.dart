@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'dart:typed_data';
+import '../enums/reaction_type.dart';
 import '../models/post.dart';
 import 'api_service.dart';
 
@@ -120,14 +121,14 @@ class PostService {
     }
   }
 
-  Future<void> reactToPost(int postId, String reactionType) async {
+  Future<void> reactToPost(int postId, ReactionType reactionType) async {
     try {
-      String cleanReactionType = reactionType.split('.').last.toUpperCase();
+      String cleanReactionType = reactionType.name.toUpperCase();
       await _apiService.post(
         'posts/$postId/react?reactionType=$cleanReactionType',
         data: {},
       );
-      } catch (e) {
+    } catch (e) {
       throw Exception('Failed to react to post: $e');
     }
   }
@@ -139,6 +140,14 @@ class PostService {
       return postsJson.map((json) => Post.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Failed to load user posts: $e');
+    }
+  }
+
+  Future<void> removeReaction(int postId) async {
+    try {
+      await _apiService.delete('posts/$postId/react');
+    } catch (e) {
+      throw Exception('Failed to remove reaction: $e');
     }
   }
 }

@@ -103,6 +103,11 @@ public class PostsController {
         return ResponseEntity.ok("Reaction updated.");
     }
 
+    @DeleteMapping("/{postId}/react")
+    public ResponseEntity<String> removeReaction(@PathVariable int postId) {
+        String response = postService.removeReaction(postId);
+        return ResponseEntity.ok(response);
+    }
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable int userId) {
         List<PostResponse> posts = postService.getUserPosts(userId);

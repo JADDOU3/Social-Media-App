@@ -97,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       await widget.postService.reactToPost(
           post.id,
-          reaction.toString()
+          reaction
       );
 
     } catch (e) {
@@ -399,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
           currentUserEmail: _currentUserEmail,
           commentService: widget.commentService,
           postService: widget.postService,
-          onReactionSelected: (reaction) => _handleReaction(post, reaction),
+         // onReactionSelected: (reaction) => _handleReaction(post, reaction),
           onPostUpdated: _loadHomeData,
           onPostDeleted: _loadHomeData,
         );

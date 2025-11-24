@@ -16,5 +16,7 @@ public interface PostReactionRepo extends JpaRepository<PostReaction, Integer> {
     int countByPostAndType(Post post, ReactionType type);
 
     int countByPost(Post post);
+
+    void deleteByPostAndUser(Post post, User user);
 }
 

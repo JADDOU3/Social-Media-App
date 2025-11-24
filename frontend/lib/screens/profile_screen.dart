@@ -171,7 +171,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         }
       });
-      await widget.postService.reactToPost(post.id, reaction.toString());
+      await widget.postService.reactToPost(post.id, reaction);
     } catch (e) {
       _loadProfileData();
       if (mounted) {
@@ -431,7 +431,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   currentUserEmail: _profile?.email ?? '',
                   commentService: widget.commentService,
                   postService: widget.postService,
-                  onReactionSelected: _handleReaction,
                   onPostUpdated: _loadProfileData,
                   onPostDeleted: _loadProfileData,
                 ),
@@ -477,7 +476,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     currentUserEmail: _profile?.email ?? '',
                     commentService: widget.commentService,
                     postService: widget.postService,
-                    onReactionSelected: _handleReaction,
                     onPostUpdated: _loadProfileData,
                     onPostDeleted: _loadProfileData,
                   ),

@@ -292,4 +292,24 @@ public class PostService {
         return response;
     }
 
+    @Transactional
+    public String removeReaction(int postId) {
+        User currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser == null) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        Post post = postRepo.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        Optional<PostReaction> existingReaction = postReactionRepo.findByPostAndUser(post, currentUser);
+
+        if (existingReaction.isPresent()) {
+            postReactionRepo.deleteByPostAndUser(post, currentUser);
+            return "Reaction removed successfully";
+        } else {
+            return "No reaction found to remove";
+        }
+    }
+
 }

@@ -4,7 +4,6 @@ import '../../models/post.dart';
 import '../../services/comment_service.dart';
 import '../../services/post_service.dart';
 import '../post_card.dart';
-import '../../enums/reaction_type.dart';
 import '../../utils/app_color.dart';
 
 class ProfilePostsSection extends StatelessWidget {
@@ -15,7 +14,6 @@ class ProfilePostsSection extends StatelessWidget {
   final String currentUserEmail;
   final CommentService commentService;
   final PostService postService;
-  final Function(Post, ReactionType) onReactionSelected;
   final VoidCallback onPostUpdated;
   final VoidCallback onPostDeleted;
 
@@ -28,7 +26,6 @@ class ProfilePostsSection extends StatelessWidget {
     required this.currentUserEmail,
     required this.commentService,
     required this.postService,
-    required this.onReactionSelected,
     required this.onPostUpdated,
     required this.onPostDeleted,
   }) : super(key: key);
@@ -132,7 +129,6 @@ class ProfilePostsSection extends StatelessWidget {
           currentUserEmail: currentUserEmail,
           commentService: commentService,
           postService: postService,
-          onReactionSelected: (reaction) => onReactionSelected(post, reaction),
           onPostUpdated: onPostUpdated,
           onPostDeleted: onPostDeleted,
         );
