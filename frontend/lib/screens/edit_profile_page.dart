@@ -36,7 +36,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Uint8List? _newImageBytes;
   String? _newImageFilename;
   String? _profileImage;
+  Uint8List? _currentProfileImageBytes;
   bool _profileImageChanged = false;
+  bool _profileImageDeleted = false;
+  bool _isLoadingImage = true;
 
   late TextEditingController nameController;
   late TextEditingController emailController;
@@ -72,6 +75,44 @@ class _EditProfilePageState extends State<EditProfilePage> {
     genderValue = user.gender;
     socialSituationValue = user.socialSituation;
     _profileImage = user.profilePicture;
+
+    _loadProfilePicture();
+  }
+
+  Future<void> _loadProfilePicture() async {
+    if (user.profilePicture != null && user.profilePicture!.isNotEmpty) {
+      try {
+        final imageBytes = await profilePictureService.getProfilePicture();
+        if (mounted && imageBytes != null) {
+          setState(() {
+            _currentProfileImageBytes = imageBytes;
+            _isLoadingImage = false;
+          });
+        } else {
+          // Image doesn't exist or returned null
+          if (mounted) {
+            setState(() {
+              _isLoadingImage = false;
+              _currentProfileImageBytes = null;
+            });
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoadingImage = false;
+            _currentProfileImageBytes = null;
+          });
+        }
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _isLoadingImage = false;
+          _currentProfileImageBytes = null;
+        });
+      }
+    }
   }
 
   Future<void> pickImage(ImageSource source) async {
@@ -82,6 +123,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
         _newImageBytes = bytes;
         _newImageFilename = picked.name;
         _profileImageChanged = true;
+        _profileImageDeleted = false;
+        _currentProfileImageBytes = null;
         if (!kIsWeb) {
           _newImageFile = File(picked.path);
         }
@@ -118,33 +161,160 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
+  Future<void> _removeProfilePicture() async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.lightCardBackground,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppColors.error),
+            const SizedBox(width: 8),
+            Text(
+              "Remove Profile Picture",
+              style: TextStyle(
+                color: AppColors.lightTextPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          "Are you sure you want to remove your profile picture?",
+          style: TextStyle(
+            color: AppColors.lightTextSecondary,
+            fontSize: 16,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              "Cancel",
+              style: TextStyle(
+                color: AppColors.lightTextSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              "Remove",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      // Call backend to delete
+      await profilePictureService.deleteProfilePicture();
+
+      // Update UI state
+      setState(() {
+        _newImageFile = null;
+        _newImageBytes = null;
+        _newImageFilename = null;
+        _profileImage = null;
+        _currentProfileImageBytes = null;
+        _profileImageChanged = true;
+        _profileImageDeleted = true;
+      });
+
+      // SUCCESS NOTIFICATION
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Profile picture removed successfully"),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      // FAILURE NOTIFICATION
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Failed to remove profile picture: $e"),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSaving = true);
 
     try {
-      // Upload profile picture if changed
-      if (_profileImageChanged && _newImageBytes != null && _newImageFilename != null) {
+      if (_profileImageChanged) {
         try {
-          if (user.profilePicture != null && user.profilePicture!.isNotEmpty) {
-            // Update existing profile picture
-            await profilePictureService.updateProfilePicture(
-              _newImageBytes!,
-              _newImageFilename!,
-            );
-          } else {
-            // Upload new profile picture
-            await profilePictureService.uploadProfilePicture(
-              _newImageBytes!,
-              _newImageFilename!,
-            );
+          if (_profileImageDeleted) {
+            if (user.profilePicture != null && user.profilePicture!.isNotEmpty) {
+              try {
+                await profilePictureService.deleteProfilePicture();
+              } catch (e) {
+                if (!e.toString().contains('404')) {
+                  rethrow;
+                }
+              }
+            }
+          } else if (_newImageBytes != null && _newImageFilename != null) {
+            if (user.profilePicture != null && user.profilePicture!.isNotEmpty) {
+              try {
+                await profilePictureService.updateProfilePicture(
+                  _newImageBytes!,
+                  _newImageFilename!,
+                );
+              } catch (e) {
+                if (e.toString().contains('404')) {
+                  await profilePictureService.uploadProfilePicture(
+                    _newImageBytes!,
+                    _newImageFilename!,
+                  );
+                } else {
+                  rethrow;
+                }
+              }
+            } else {
+              await profilePictureService.uploadProfilePicture(
+                _newImageBytes!,
+                _newImageFilename!,
+              );
+            }
           }
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text("Error uploading profile picture: $e"),
+                content: Text("Error updating profile picture: $e"),
                 backgroundColor: AppColors.error,
               ),
             );
@@ -428,10 +598,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 } catch (e) {
                   setDialogState(() => isLoading = false);
                   if (context.mounted) {
-                    // Close the password dialog first
                     Navigator.pop(context);
-
-                    // Show error dialog
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -593,22 +760,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 ),
                                 ListTile(
                                   leading: Icon(
-                                    Icons.camera_alt,
+                                    Icons.delete,
                                     color: AppColors.primary,
                                   ),
                                   title: Text(
-                                    "Camera",
+                                    "Remove profile image",
                                     style: TextStyle(
                                       color: AppColors.lightTextPrimary,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                   onTap: () {
-                                    pickImage(ImageSource.camera);
                                     Navigator.pop(context);
+                                    Future.delayed(Duration(milliseconds: 150), () {
+                                      _removeProfilePicture();
+                                    });
                                   },
+
                                 ),
-                                if (_profileImage != null || _newImageBytes != null)
+                                if (_profileImage != null || _newImageBytes != null || _currentProfileImageBytes != null)
                                   ListTile(
                                     leading: const Icon(
                                       Icons.delete,
@@ -622,13 +792,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                       ),
                                     ),
                                     onTap: () {
-                                      setState(() {
-                                        _newImageFile = null;
-                                        _newImageBytes = null;
-                                        _profileImage = null;
-                                        _profileImageChanged = true;
-                                      });
                                       Navigator.pop(context);
+                                      _removeProfilePicture();
                                     },
                                   ),
                                 const SizedBox(height: 16),
@@ -651,11 +816,28 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               child: SizedBox(
                                 width: 120,
                                 height: 120,
-                                child: _newImageBytes != null
+                                child: _isLoadingImage
+                                    ? Container(
+                                  color: AppColors.lightBackground,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.primary,
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                )
+                                    : (_newImageBytes != null
                                     ? Image.memory(_newImageBytes!, fit: BoxFit.cover)
-                                    : (_profileImage != null
-                                    ? Image.network(_profileImage!, fit: BoxFit.cover)
-                                    : Image.asset("assets/default_avatar.png", fit: BoxFit.cover)),
+                                    : (_currentProfileImageBytes != null
+                                    ? Image.memory(_currentProfileImageBytes!, fit: BoxFit.cover)
+                                    : Container(
+                                  color: AppColors.lightBackground,
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: AppColors.lightTextSecondary,
+                                  ),
+                                ))),
                               ),
                             ),
                           ),

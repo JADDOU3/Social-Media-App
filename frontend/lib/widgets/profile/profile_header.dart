@@ -72,29 +72,6 @@ class ProfileHeader extends StatelessWidget {
                   )
                       : null,
                 ),
-                if (isOwnProfile)
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isDark
-                              ? AppColors.darkBackground
-                              : AppColors.lightBackground,
-                          width: 2,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        size: 16,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
