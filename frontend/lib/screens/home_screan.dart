@@ -336,7 +336,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         if (isMobile)
           SizedBox(
-            height: 120, // Increased from 115 to fix 2-pixel overflow
+            height: 137,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
