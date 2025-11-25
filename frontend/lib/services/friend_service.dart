@@ -1,7 +1,7 @@
-// services/friend_service.dart
 import '../models/friend_request.dart';
 import '../models/friend_response.dart';
 import '../models/friend_status.dart';
+import '../models/suggested_friend_response.dart';
 import '../models/user_search_result.dart';
 import 'api_service.dart';
 
@@ -57,7 +57,6 @@ class FriendService {
   Future<List<FriendResponse>> getUserFriends(int userId) async {
     try {
       final response = await _apiService.get('/friends/user/$userId');
-
       return (response as List)
           .map((json) => FriendResponse.fromJson(json))
           .toList();
@@ -97,4 +96,10 @@ class FriendService {
     return FriendStatus.fromJson(response);
   }
 
+  Future<List<SuggestedFriendResponse>> getSuggestedFriends() async {
+    final response = await _apiService.get('/friends/suggested');
+    return (response as List)
+        .map((json) => SuggestedFriendResponse.fromJson(json))
+        .toList();
+  }
 }

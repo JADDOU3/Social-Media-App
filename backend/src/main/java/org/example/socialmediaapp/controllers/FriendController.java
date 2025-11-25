@@ -1,17 +1,16 @@
 package org.example.socialmediaapp.controllers;
 
-
 import lombok.RequiredArgsConstructor;
 import org.example.socialmediaapp.dto.FriendRequest;
 import org.example.socialmediaapp.dto.FriendResponse;
 import org.example.socialmediaapp.dto.FriendStatusResponse;
+import org.example.socialmediaapp.dto.SuggestedFriendResponse;
 import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.services.FriendService;
 import org.example.socialmediaapp.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -62,8 +61,7 @@ public class FriendController {
 
     @GetMapping("/")
     public ResponseEntity<List<FriendResponse>> getAllFriends() {
-        User user = SecurityUtils.getCurrentUser();
-        List<FriendResponse> friends = friendService.getAllFriends(user.getId());
+        List<FriendResponse> friends = friendService.getAllFriends();
         return ResponseEntity.ok(friends);
     }
 
@@ -84,7 +82,6 @@ public class FriendController {
         FriendResponse blocked = friendService.blockUser(id);
         return ResponseEntity.ok(blocked);
     }
-
 
     @PatchMapping("/{id}/unblock")
     public ResponseEntity<FriendResponse> unblockUser(@PathVariable int id) {
@@ -110,8 +107,13 @@ public class FriendController {
         if (currentUser == null) {
             return ResponseEntity.status(401).build();
         }
-
         FriendStatusResponse status = friendService.getFriendStatus(currentUser.getId(), userId);
         return ResponseEntity.ok(status);
+    }
+
+    @GetMapping("/suggested")
+    public ResponseEntity<List<SuggestedFriendResponse>> getSuggestedFriends() {
+        List<SuggestedFriendResponse> suggested = friendService.getSuggestedFriends();
+        return ResponseEntity.ok(suggested);
     }
 }

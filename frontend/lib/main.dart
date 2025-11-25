@@ -1,66 +1,92 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:frontend/routes/app_router.dart';
-import 'package:frontend/routes/go_router.dart';
-import 'package:frontend/services/api_service.dart';
-import 'package:frontend/services/comment_service.dart';
-import 'package:frontend/services/local_storage_service.dart';
-import 'package:frontend/services/post_service.dart';
-import 'package:frontend/services/profile_picture_service.dart';
-import 'package:frontend/services/user_service.dart';
-import 'package:frontend/utils/app_theme.dart';
-import 'package:frontend/utils/theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'routes/go_router.dart';
+import 'routes/app_router.dart';
+import 'services/api_service.dart';
+import 'services/local_storage_service.dart';
+import 'services/auth_service.dart';
+import 'services/post_service.dart';
+import 'services/profile_picture_service.dart';
+import 'services/comment_service.dart';
+import 'services/user_service.dart';
+import 'services/friend_service.dart';
+import 'utils/theme_provider.dart';
+import 'utils/app_color.dart';
 
-void main() async {
-  const secureStorage = FlutterSecureStorage();
-  final localStorageService = LocalStorageService(secureStorage);
-
+void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     const secureStorage = FlutterSecureStorage();
-    final localStorageService = LocalStorageService(secureStorage);
-    final apiService = ApiService(localStorageService);
-    final userService = UserService(apiService);
-    final profilePictureService = ProfilePictureService(apiService);
-    final postService = PostService(apiService);
-    final commentService = CommentService(apiService);
+    final localStorage = LocalStorageService(secureStorage);
+    final apiService = ApiService(localStorage);
 
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider(localStorageService)),
-        Provider<LocalStorageService>.value(value: localStorageService),
-        Provider<ApiService>.value(value: apiService),
-        Provider<UserService>.value(value: userService),
-        Provider<ProfilePictureService>.value(value: profilePictureService),
-        Provider<PostService>.value(value: postService),
-        Provider<CommentService>.value(value: commentService),
+        Provider.value(value: localStorage),
+        Provider.value(value: apiService),
+        Provider(
+          create: (context) => AuthService(
+            Provider.of<ApiService>(context, listen: false),
+            Provider.of<LocalStorageService>(context, listen: false),
+          ),
+        ),
+        Provider(
+          create: (context) => PostService(
+            Provider.of<ApiService>(context, listen: false),
+          ),
+        ),
+        Provider(
+          create: (context) => ProfilePictureService(
+            Provider.of<ApiService>(context, listen: false),
+          ),
+        ),
+        Provider(
+          create: (context) => CommentService(
+            Provider.of<ApiService>(context, listen: false),
+          ),
+        ),
+        Provider(
+          create: (context) => UserService(
+            Provider.of<ApiService>(context, listen: false),
+          ),
+        ),
+        Provider(
+          create: (context) => FriendService(
+            Provider.of<ApiService>(context, listen: false),
+          ),
+        ),
+
+        ChangeNotifierProvider(create: (_) => ThemeProvider(localStorage)),
       ],
-      child: const SocialMediaApp(),
-    );
-  }
-}
-
-class SocialMediaApp extends StatelessWidget {
-  const SocialMediaApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-
-    return MaterialApp.router(
-      title: 'Social Media Profile',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      routerConfig: router,
+      child: Builder(
+        builder: (context) {
+          return MaterialApp.router(
+            title: 'Social Media App',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              primarySwatch: Colors.blue,
+              scaffoldBackgroundColor: AppColors.lightBackground,
+              cardColor: AppColors.lightCardBackground,
+            ),
+            darkTheme: ThemeData(
+              brightness: Brightness.dark,
+              scaffoldBackgroundColor: AppColors.darkBackground,
+              cardColor: AppColors.darkCardBackground,
+            ),
+            themeMode: Provider.of<ThemeProvider>(context).isDarkMode
+                ? ThemeMode.dark
+                : ThemeMode.light,
+            routerConfig: router,
+          );
+        },
+      ),
     );
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import '../screens/blocked_users_screen.dart';
 import '../screens/friends_screen.dart';
 import '../screens/home_screan.dart';
@@ -53,6 +52,7 @@ final GoRouter router = GoRouter(
         profilePictureService: profilePictureService,
         postService: postService,
         commentService: commentService,
+        friendService: friendService,
       ),
     ),
     GoRoute(
