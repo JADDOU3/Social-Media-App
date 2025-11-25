@@ -1084,7 +1084,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
-                                  color: Colors.white,
+                                     color: Colors.white,
                                   strokeWidth: 2,
                                 ),
                               )
