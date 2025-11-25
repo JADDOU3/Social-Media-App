@@ -150,4 +150,19 @@ class PostService {
       throw Exception('Failed to remove reaction: $e');
     }
   }
+
+  Future<List<Post>> getMyAndFriendsPosts() async {
+    try {
+      final myPosts = await getMyPosts();
+      final friendsPosts = await getFriendsPosts();
+
+      final combined = [...myPosts, ...friendsPosts];
+
+      combined.sort((a, b) => b.createdDate.compareTo(a.createdDate));
+
+      return combined;
+    } catch (e) {
+      throw Exception('Failed to load combined feed: $e');
+    }
+  }
 }

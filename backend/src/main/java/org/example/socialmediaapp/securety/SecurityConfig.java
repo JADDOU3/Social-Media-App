@@ -53,7 +53,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler())           // 403
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login","/api/users/register", "/api/posts/{postId}/images/{imageId}, /api/posts/").permitAll().anyRequest().authenticated()
+                        .requestMatchers("/api/auth/login","/api/users/register", "/api/posts/{postId}/images/{imageId}").permitAll().anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .userDetailsService(userService);
