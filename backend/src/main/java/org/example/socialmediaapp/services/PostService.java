@@ -162,7 +162,7 @@ public class PostService {
         response.setImageCount(post.getImageCount());
 
         if (post.getImages() != null && !post.getImages().isEmpty()) {
-            String baseUrl = "http://10.10.30.113:8080";
+            String baseUrl = "localhost";
             response.setImageUrls(
                     post.getImages().stream()
                             .map(img -> baseUrl + "/api/posts/" + post.getId() + "/images/" + img.getId())
@@ -261,7 +261,7 @@ public class PostService {
 
         response.setImageCount(post.getImageCount());
         if (post.getImages() != null && !post.getImages().isEmpty()) {
-            String baseUrl = "http://10.10.30.113:8080";
+            String baseUrl = "localhost";
             response.setImageUrls(
                     post.getImages().stream()
                             .map(img -> baseUrl + "/api/posts/" + post.getId() + "/images/" + img.getId())

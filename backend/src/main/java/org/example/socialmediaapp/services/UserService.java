@@ -1,64 +1,55 @@
 package org.example.socialmediaapp.services;
 
 import jakarta.transaction.Transactional;
-
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.example.socialmediaapp.dto.ProfileUpdateRequest;
 import org.example.socialmediaapp.dto.RegisterRequest;
 import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.repositories.UserRepo;
 import org.example.socialmediaapp.utils.PasswordChecker;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.regex.Pattern;
 
 @Service
-@Transactional(rollbackOn =  Exception.class)
+@Transactional(rollbackOn = Exception.class)
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
     private final UserRepo userRepo;
     private final PasswordEncoder passwordEncoder;
 
-
     public void deleteByEmail(String email) {
-        if(userRepo.findByEmail(email).isEmpty()) {
+        if (userRepo.findByEmail(email).isEmpty()) {
             throw new IllegalStateException("User with email " + email + " not found");
         }
         userRepo.findByEmail(email);
     }
 
-    public User updateUserInfo(String Email,User updatedData) {
-        User userToBeUpdated=userRepo.findByEmail(Email).orElseThrow(()-> new IllegalStateException("User with email " + Email + " not found"));
-        if(userToBeUpdated.getBio() != null && !userToBeUpdated.getBio().equals(updatedData.getBio())) {
+    public User updateUserInfo(String Email, User updatedData) {
+        User userToBeUpdated = userRepo.findByEmail(Email).orElseThrow(() -> new IllegalStateException("User with email " + Email + " not found"));
+        if (userToBeUpdated.getBio() != null && !userToBeUpdated.getBio().equals(updatedData.getBio())) {
             userToBeUpdated.setBio(updatedData.getBio());
         }
-        if(userToBeUpdated.getJob() != null && !userToBeUpdated.getJob().equals(updatedData.getJob())) {
+        if (userToBeUpdated.getJob() != null && !userToBeUpdated.getJob().equals(updatedData.getJob())) {
             userToBeUpdated.setJob(updatedData.getJob());
         }
-        if(userToBeUpdated.getGender() != null && !userToBeUpdated.getGender().equals(updatedData.getGender())) {
+        if (userToBeUpdated.getGender() != null && !userToBeUpdated.getGender().equals(updatedData.getGender())) {
             userToBeUpdated.setGender(updatedData.getGender());
         }
-        if(userToBeUpdated.getLocation() != null && !userToBeUpdated.getLocation().equals(updatedData.getLocation())) {
+        if (userToBeUpdated.getLocation() != null && !userToBeUpdated.getLocation().equals(updatedData.getLocation())) {
             userToBeUpdated.setLocation(updatedData.getLocation());
         }
-        if(userToBeUpdated.getName() != null && !userToBeUpdated.getName().equals(updatedData.getName())) {
+        if (userToBeUpdated.getName() != null && !userToBeUpdated.getName().equals(updatedData.getName())) {
             userToBeUpdated.setName(updatedData.getName());
         }
-        if(userToBeUpdated.getPhoneNumber() != null && !userToBeUpdated.getPhoneNumber().equals(updatedData.getPhoneNumber())) {
+        if (userToBeUpdated.getPhoneNumber() != null && !userToBeUpdated.getPhoneNumber().equals(updatedData.getPhoneNumber())) {
             userToBeUpdated.setPhoneNumber(updatedData.getPhoneNumber());
         }
-        if(userToBeUpdated.getProfilePicture() != null && !userToBeUpdated.getProfilePicture().equals(updatedData.getProfilePicture())) {
+        if (userToBeUpdated.getProfilePicture() != null && !userToBeUpdated.getProfilePicture().equals(updatedData.getProfilePicture())) {
             userToBeUpdated.setProfilePicture(updatedData.getProfilePicture());
         }
         if (userToBeUpdated.getSocialSituation() != null && !userToBeUpdated.getSocialSituation().equals(updatedData.getSocialSituation())) {
@@ -68,11 +59,8 @@ public class UserService implements UserDetailsService {
     }
 
     private final PasswordChecker passwordCheker;
-
     private static final String EMAIL_REGEX = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$";
     private static final Pattern EMAIL_PATTERN = Pattern.compile(EMAIL_REGEX);
-
-
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -81,15 +69,13 @@ public class UserService implements UserDetailsService {
     }
 
     public User Register(RegisterRequest registerRequest) {
-
         if (!isEmailValid(registerRequest.getEmail())) {
             throw new IllegalArgumentException("Invalid email format");
         }
 
-        if(userRepo.existsByEmail(registerRequest.getEmail())){
+        if (userRepo.existsByEmail(registerRequest.getEmail())) {
             throw new IllegalArgumentException("Email already exists");
         }
-
 
         if (!passwordCheker.isPasswordStrong(registerRequest.getPassword())) {
             throw new IllegalArgumentException(
@@ -114,15 +100,11 @@ public class UserService implements UserDetailsService {
         return userRepo.save(user);
     }
 
-
-
     public boolean existsByEmail(String email) {
         return userRepo.existsByEmail(email);
     }
 
-
-
-    public List<User> findUsersByName(String name){
+    public List<User> findUsersByName(String name) {
         List<User> users = userRepo.findByNameContainingIgnoreCase(name);
         return users;
     }
@@ -136,5 +118,9 @@ public class UserService implements UserDetailsService {
 
     public User findById(int userId) {
         return userRepo.findById(userId).orElseThrow(() -> new IllegalStateException("User with ID " + userId + " not found"));
+    }
+
+    public User findByEmail(String userEmail) {
+        return userRepo.findByEmail(userEmail).orElseThrow(() -> new IllegalStateException("User with Email " + userEmail + " not found"));
     }
 }

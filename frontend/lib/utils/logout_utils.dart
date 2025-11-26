@@ -30,5 +30,6 @@ Future<void> performLogout(BuildContext context) async {
   } catch (e) {
     Navigator.of(context).pop();
     showErrorSnackbar(context, "Logout failed. Please try again.");
+    context.go('/login');
   }
 }

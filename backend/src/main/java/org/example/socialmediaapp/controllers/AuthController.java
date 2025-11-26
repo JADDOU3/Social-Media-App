@@ -1,8 +1,8 @@
 package org.example.socialmediaapp.controllers;
 
-
 import org.example.socialmediaapp.dto.AuthRequest;
 import org.example.socialmediaapp.dto.AuthResponse;
+import org.example.socialmediaapp.entities.User;
 import org.example.socialmediaapp.services.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = "*")  // URL of your Flutter web app
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -24,12 +24,15 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest authRequest){
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authRequest.getEmail() , authRequest.getPassword())
+                new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword())
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtService.generateToken(authentication);
-        return ResponseEntity.ok(new AuthResponse(jwt));
+        User user = (User) authentication.getPrincipal();
+
+
+        int userId = user.getId();
+
+        return ResponseEntity.ok(new AuthResponse(jwt, userId));
     }
-
 }
-

@@ -16,6 +16,16 @@ class ProfilePictureService {
     }
   }
 
+  Future<Uint8List?> getUserProfilePictureByEmail(String userEmail) async {
+    try {
+      final endpoint = 'profilepicture/by-email/$userEmail';
+      final response = await _apiService.getBytes(endpoint);
+      return response;
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<Uint8List?> getUserProfilePicture([int? userId]) async {
     try {
       final endpoint = userId != null

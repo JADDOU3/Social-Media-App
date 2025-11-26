@@ -62,7 +62,6 @@ class MyApp extends StatelessWidget {
             Provider.of<ApiService>(context, listen: false),
           ),
         ),
-
         ChangeNotifierProvider(create: (_) => ThemeProvider(localStorage)),
       ],
       child: Builder(
