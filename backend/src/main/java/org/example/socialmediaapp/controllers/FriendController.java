@@ -85,8 +85,8 @@ public class FriendController {
 
     @PatchMapping("/{id}/unblock")
     public ResponseEntity<FriendResponse> unblockUser(@PathVariable int id) {
-        FriendResponse unblocked = friendService.unblockUser(id);
-        return ResponseEntity.ok(unblocked);
+        friendService.unblockUser(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/remove")
