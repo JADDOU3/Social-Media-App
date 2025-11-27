@@ -13,6 +13,7 @@ import org.example.socialmediaapp.utils.SecurityUtils;
 import org.example.socialmediaapp.utils.enums.RequestStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,7 +36,7 @@ public class FriendService {
         Optional<Friend> existingRequest1 = friendRepo.findByUser1AndUser2(sender, receiver);
         Optional<Friend> existingRequest2 = friendRepo.findByUser1AndUser2(receiver, sender);
         if (existingRequest1.isPresent() || existingRequest2.isPresent()) {
-            throw new RuntimeException("Friend request already exists");
+                throw new RuntimeException("Friend request already exists");
         }
         Friend friendRequest = new Friend(sender, receiver, false, RequestStatus.REQUESTED);
         Friend friend = friendRepo.save(friendRequest);
@@ -124,7 +125,7 @@ public class FriendService {
         return convertToResponse(blockedFriend);
     }
 
-    public FriendResponse unblockUser(int friendId) {
+    public void unblockUser(int friendId) {
         User user = SecurityUtils.getCurrentUser();
         Friend friend = friendRepo.findById(friendId)
                 .orElseThrow(() -> new RuntimeException("Friendship not found"));
@@ -134,9 +135,7 @@ public class FriendService {
         if (!friend.isBlocked()) {
             throw new RuntimeException("User is not blocked");
         }
-        friend.setBlocked(false);
-        Friend unblockedFriend = friendRepo.save(friend);
-        return convertToResponse(unblockedFriend);
+        friendRepo.delete(friend);
     }
 
     public void cancelFriendRequest(int id) {
@@ -148,9 +147,8 @@ public class FriendService {
         }
         if (friendRequest.getUser1().getId() != user.getId()) {
             throw new RuntimeException("Only the sender can cancel this request");
-        }
-        friendRequest.setRequestStatus(RequestStatus.CANCELLED);
-        friendRepo.save(friendRequest);
+        };
+        friendRepo.delete(friendRequest);
     }
 
     public void removeFriend(int id) {
