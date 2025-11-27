@@ -9,6 +9,7 @@ import '../screens/login_screen.dart';
 import '../screens/signup_screen.dart';
 import '../screens/check_auth_screen.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../services/comment_service.dart';
 import '../services/friend_service.dart';
 import '../services/local_storage_service.dart';
@@ -23,6 +24,7 @@ GlobalKey<NavigatorState>(debugLabel: 'root');
 const secureStorage = FlutterSecureStorage();
 final localStorage = LocalStorageService(secureStorage);
 final apiService = ApiService(localStorage);
+final authService = AuthService(apiService, localStorage);
 final userService = UserService(apiService);
 final profilePictureService = ProfilePictureService(apiService);
 final postService = PostService(apiService);
@@ -37,14 +39,17 @@ final GoRouter router = GoRouter(
       path: AppRoutes.checkAuth,
       builder: (context, state) => const CheckAuthScreen(),
     ),
+
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
     ),
+
     GoRoute(
       path: '/signup',
       builder: (context, state) => const SignUpScreen(),
     ),
+
     GoRoute(
       path: AppRoutes.home,
       builder: (context, state) => HomeScreen(
@@ -53,8 +58,11 @@ final GoRouter router = GoRouter(
         postService: postService,
         commentService: commentService,
         friendService: friendService,
+        localStorage: localStorage,
+        authService: authService,
       ),
     ),
+
     GoRoute(
       path: AppRoutes.profile,
       builder: (context, state) => ProfileScreen(
@@ -65,6 +73,7 @@ final GoRouter router = GoRouter(
         friendService: friendService,
       ),
     ),
+
     GoRoute(
       path: '${AppRoutes.profile}/:userId',
       builder: (context, state) {
@@ -81,6 +90,7 @@ final GoRouter router = GoRouter(
         );
       },
     ),
+
     GoRoute(
       path: AppRoutes.friends,
       builder: (context, state) => FriendsScreen(
@@ -89,6 +99,7 @@ final GoRouter router = GoRouter(
         profilePictureService: profilePictureService,
       ),
     ),
+
     GoRoute(
       path: AppRoutes.blocked,
       builder: (context, state) => BlockedUsersScreen(

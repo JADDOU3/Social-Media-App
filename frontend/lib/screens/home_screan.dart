@@ -2,22 +2,24 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../models/post.dart';
-import '../models/suggested_friend_response.dart';
-import '../models/friend_response.dart';
-import '../models/friend_status.dart';
-import '../routes/app_router.dart';
+import '../services/auth_service.dart';
 import '../services/post_service.dart';
 import '../services/profile_picture_service.dart';
 import '../services/comment_service.dart';
 import '../services/user_service.dart';
 import '../services/friend_service.dart';
+import '../services/local_storage_service.dart';
 import '../utils/app_color.dart';
 import '../utils/theme_provider.dart';
 import '../utils/logout_utils.dart';
+import '../utils/snackbar_utils.dart';
 import '../widgets/post_card.dart';
 import '../widgets/create_post_dialog.dart';
+import '../routes/app_router.dart';
 import '../enums/reaction_type.dart';
+import '../models/post.dart';
+import '../models/suggested_friend_response.dart';
+import '../models/friend_response.dart';
 import '../models/user_search_result.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -26,6 +28,8 @@ class HomeScreen extends StatefulWidget {
   final CommentService commentService;
   final UserService userService;
   final FriendService friendService;
+  final LocalStorageService localStorage;
+  final AuthService authService;
 
   const HomeScreen({
     Key? key,
@@ -34,6 +38,8 @@ class HomeScreen extends StatefulWidget {
     required this.commentService,
     required this.userService,
     required this.friendService,
+    required this.localStorage,
+    required this.authService,
   }) : super(key: key);
 
   @override
@@ -44,18 +50,20 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Post> _posts = [];
   List<SuggestedFriendResponse> _suggestedFriends = [];
   List<FriendResponse> _friends = [];
-  Uint8List? _currentUserProfilePicture;
   Map<int, Uint8List?> _avatarCache = {};
   String _currentUserEmail = '';
   int? _currentUserId;
   bool _isLoading = true;
   bool _isLoadingFriends = true;
+  bool _isLoadingProfile = true;
   String? _error;
   String? _friendsError;
+  String? _profileError;
 
   @override
   void initState() {
     super.initState();
+    _loadUserIdFromToken();
     _loadAllData();
   }
 
@@ -65,26 +73,95 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  Future<void> _loadUserIdFromToken() async {
+    try {
+      final userId = await widget.authService.getCurrentUserId();
+      if (userId != null && mounted) {
+        setState(() {
+          _currentUserId = userId;
+        });
+      }
+    } catch (e) {
+      print('Failed to load userId from token: $e');
+    }
+  }
+
   Future<void> _loadAllData() async {
     if (!mounted) return;
 
     setState(() {
       _isLoading = true;
       _isLoadingFriends = true;
+      _isLoadingProfile = true;
       _error = null;
       _friendsError = null;
+      _profileError = null;
     });
 
+    try {
+      await Future.wait([_loadProfile(), _loadPosts(), _loadFriends()]);
+    } catch (e) {
+      if (!mounted) return;
+    }
+  }
+
+  Future<void> _loadProfile() async {
     try {
       final profile = await widget.userService.getProfile();
       if (!mounted) return;
 
-      _currentUserId = profile.id;
-      _currentUserEmail = profile.email ?? '';
+      if (profile == null || profile.id == null) {
+        throw Exception('User profile not found');
+      }
 
+      setState(() {
+        _currentUserId = profile.id;
+        _currentUserEmail = profile.email ?? '';
+        _isLoadingProfile = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      if (_currentUserId != null) {
+        print('Profile load failed but proceeding with token userId: $_currentUserId');
+        setState(() {
+          _isLoadingProfile = false;
+        });
+      } else {
+        setState(() {
+          _profileError = e.toString();
+          _isLoadingProfile = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadPosts() async {
+    try {
+      final posts = await widget.postService.getMyAndFriendsPosts();
+      if (!mounted) return;
+
+      setState(() {
+        _posts = posts;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _error = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadFriends() async {
+    try {
       final results = await Future.wait([
-        widget.postService.getMyAndFriendsPosts(),
-        widget.profilePictureService.getUserProfilePicture(null),
         widget.friendService.getSuggestedFriends(),
         widget.friendService.getAllFriends(),
       ]);
@@ -92,22 +169,21 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
 
       setState(() {
-        _posts = results[0] as List<Post>;
-        _currentUserProfilePicture = results[1] as Uint8List?;
-        _suggestedFriends = results[2] as List<SuggestedFriendResponse>;
-        _friends = results[3] as List<FriendResponse>;
-        _isLoading = false;
-        _isLoadingFriends = false;
+        _suggestedFriends = results[0] as List<SuggestedFriendResponse>;
+        _friends = results[1] as List<FriendResponse>;
       });
     } catch (e) {
-      print('Error loading data: $e');
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
-        _isLoading = false;
-        _isLoadingFriends = false;
+        _friendsError = e.toString();
       });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingFriends = false;
+        });
+      }
     }
   }
 
@@ -141,12 +217,12 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundImage: bytes != null ? MemoryImage(bytes) : null,
           child: bytes == null
               ? Text(
-                  name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                )
+            name.isNotEmpty ? name[0].toUpperCase() : '?',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          )
               : null,
         );
       },
@@ -220,17 +296,13 @@ class _HomeScreenState extends State<HomeScreen> {
           title: Text(
             'Confirm Logout',
             style: TextStyle(
-              color: isDark
-                  ? AppColors.darkTextPrimary
-                  : AppColors.lightTextPrimary,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
             ),
           ),
           content: Text(
             'Are you sure you want to logout?',
             style: TextStyle(
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
             ),
           ),
           actions: [
@@ -239,9 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Text(
                 'Cancel',
                 style: TextStyle(
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                 ),
               ),
             ),
@@ -249,7 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () async {
                 Navigator.pop(dialogContext);
                 if (mounted) {
-                  performLogout(context);
+                  await performLogout(context);
                 }
               },
               child: const Text(
@@ -276,21 +346,17 @@ class _HomeScreenState extends State<HomeScreen> {
         name,
         style: TextStyle(
           fontWeight: FontWeight.w600,
-          color: isDark
-              ? AppColors.darkTextPrimary
-              : AppColors.lightTextPrimary,
+          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
         ),
       ),
       subtitle: subtitle != null
           ? Text(
-              subtitle,
-              style: TextStyle(
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
-                fontSize: 12,
-              ),
-            )
+        subtitle,
+        style: TextStyle(
+          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+          fontSize: 12,
+        ),
+      )
           : null,
       trailing: trailing,
       onTap: () {
@@ -325,9 +391,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Icon(
                 Icons.person_add,
                 size: 20,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
               ),
               const SizedBox(width: 8),
               Text(
@@ -335,9 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: isDark
-                      ? AppColors.darkTextPrimary
-                      : AppColors.lightTextPrimary,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                 ),
               ),
             ],
@@ -370,20 +432,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildAvatar(
-                              suggestion.id,
-                              suggestion.name,
-                              radius: 28,
-                            ),
-                            const SizedBox(height: 8),
+
+                            _buildAvatar(suggestion.id, suggestion.name, radius: 24),
+                            const SizedBox(height: 4),
                             Text(
                               suggestion.name,
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
-                                color: isDark
-                                    ? AppColors.darkTextPrimary
-                                    : AppColors.lightTextPrimary,
-                                fontSize: 12,
+
+                                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                fontSize: 10,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -392,29 +450,20 @@ class _HomeScreenState extends State<HomeScreen> {
                             Text(
                               '${suggestion.mutualFriendsCount} mutual',
                               style: TextStyle(
-                                color: isDark
-                                    ? AppColors.darkTextSecondary
-                                    : AppColors.lightTextSecondary,
-                                fontSize: 10,
+                                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                fontSize: 8,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
                             IconButton(
-                              icon: const Icon(
-                                Icons.add_circle_outline,
-                                size: 32,
-                              ),
+                              icon: const Icon(Icons.add_circle_outline, size: 30),
                               color: AppColors.primary,
-                              onPressed: () =>
-                                  _sendFriendRequest(suggestion.id),
+                              onPressed: () => _sendFriendRequest(suggestion.id),
                               tooltip: 'Send friend request',
                               padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(
-                                minWidth: 32,
-                                minHeight: 32,
-                              ),
+                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                             ),
                           ],
                         ),
@@ -440,7 +489,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 userId: suggestion.id,
                 name: suggestion.name,
                 subtitle:
-                    '${suggestion.mutualFriendsCount} mutual friend${suggestion.mutualFriendsCount != 1 ? 's' : ''}',
+                '${suggestion.mutualFriendsCount} mutual friend${suggestion.mutualFriendsCount != 1 ? 's' : ''}',
                 isDark: isDark,
                 trailing: IconButton(
                   icon: const Icon(Icons.add_circle_outline),
@@ -463,6 +512,10 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
+    if (_currentUserId == null) {
+      return const SizedBox.shrink();
+    }
+
     if (_friends.isEmpty && _suggestedFriends.isEmpty) {
       return _buildEmptyFriendsState(isDark);
     }
@@ -477,9 +530,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Icon(
                 Icons.people,
                 size: 20,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
               ),
               const SizedBox(width: 8),
               Text(
@@ -487,9 +538,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: isDark
-                      ? AppColors.darkTextPrimary
-                      : AppColors.lightTextPrimary,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                 ),
               ),
             ],
@@ -505,12 +554,8 @@ class _HomeScreenState extends State<HomeScreen> {
               itemBuilder: (context, index) {
                 final friend = _friends[index];
                 final bool iAmSender = _currentUserId == friend.senderId;
-                final int friendUserId = iAmSender
-                    ? friend.receiverId
-                    : friend.senderId;
-                final String friendName = iAmSender
-                    ? friend.receiverName
-                    : friend.senderName;
+                final int friendUserId = iAmSender ? friend.receiverId : friend.senderId;
+                final String friendName = iAmSender ? friend.receiverName : friend.senderName;
 
                 return GestureDetector(
                   onTap: () {
@@ -536,10 +581,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               friendName,
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
-                                color: isDark
-                                    ? AppColors.darkTextPrimary
-                                    : AppColors.lightTextPrimary,
-                                fontSize: 11,
+                                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                fontSize: 9,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -561,9 +604,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Text(
                 'No friends yet',
                 style: TextStyle(
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                 ),
               ),
             ),
@@ -579,14 +620,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             itemBuilder: (context, index) {
               final friend = _friends[index];
-
               final bool iAmSender = _currentUserId == friend.senderId;
-              final int friendUserId = iAmSender
-                  ? friend.receiverId
-                  : friend.senderId;
-              final String friendName = iAmSender
-                  ? friend.receiverName
-                  : friend.senderName;
+              final int friendUserId = iAmSender ? friend.receiverId : friend.senderId;
+              final String friendName = iAmSender ? friend.receiverName : friend.senderName;
 
               return _buildUserTile(
                 userId: friendUserId,
@@ -609,9 +645,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(
               Icons.people_outline,
               size: 48,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
             ),
             const SizedBox(height: 16),
             Text(
@@ -619,18 +653,14 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: isDark
-                    ? AppColors.darkTextPrimary
-                    : AppColors.lightTextPrimary,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Add friends to see their posts here!',
               style: TextStyle(
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -646,7 +676,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (_error != null) {
-      return _buildErrorState(isDark);
+      return _buildErrorState(isDark, _error, 'Retry', _loadPosts);
     }
 
     if (_posts.isEmpty) {
@@ -658,17 +688,27 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         children: List.generate(_posts.length, (index) {
           final post = _posts[index];
+
           return Padding(
             padding: const EdgeInsets.only(bottom: 16.0),
-            child: PostCard(
-              post: post,
-              isDark: isDark,
-              profilePicture: _currentUserProfilePicture,
-              currentUserEmail: _currentUserEmail,
-              commentService: widget.commentService,
-              postService: widget.postService,
-              onPostUpdated: _loadAllData,
-              onPostDeleted: _loadAllData,
+            child: FutureBuilder<Uint8List?>(
+              future: widget.profilePictureService.getUserProfilePictureByEmail(
+                post.authorEmail ?? '',
+              ),
+              builder: (context, snapshot) {
+                final avatar = snapshot.data;
+
+                return PostCard(
+                  post: post,
+                  isDark: isDark,
+                  profilePicture: avatar,
+                  currentUserEmail: _currentUserEmail,
+                  commentService: widget.commentService,
+                  postService: widget.postService,
+                  onPostUpdated: _loadAllData,
+                  onPostDeleted: _loadAllData,
+                );
+              },
             ),
           );
         }),
@@ -687,9 +727,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(
               Icons.article_outlined,
               size: 64,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
             ),
             const SizedBox(height: 24),
             Text(
@@ -697,9 +735,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: isDark
-                    ? AppColors.darkTextPrimary
-                    : AppColors.lightTextPrimary,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
               ),
             ),
             const SizedBox(height: 16),
@@ -707,9 +743,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'Your friends haven\'t posted anything yet.\nAdd more friends to see their posts here!',
               style: TextStyle(
                 fontSize: 16,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -725,10 +759,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -740,7 +771,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildErrorState(bool isDark) {
+  Widget _buildErrorState(
+      bool isDark,
+      String? error,
+      String buttonText,
+      VoidCallback onRetry,
+      ) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -748,9 +784,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Icon(
             Icons.error_outline,
             size: 64,
-            color: isDark
-                ? AppColors.darkTextSecondary
-                : AppColors.lightTextSecondary,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
           ),
           const SizedBox(height: 16),
           Text(
@@ -758,27 +792,23 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: isDark
-                  ? AppColors.darkTextPrimary
-                  : AppColors.lightTextPrimary,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            _error ?? _friendsError ?? 'Unknown error',
+            error ?? 'Unknown error',
             style: TextStyle(
               fontSize: 14,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: _refreshAll,
+            onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
+            label: Text(buttonText),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
@@ -797,6 +827,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
+
+    if (_isLoadingProfile && _currentUserId == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -829,9 +865,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.settings_outlined),
-            color: isDark
-                ? AppColors.darkCardBackground
-                : AppColors.lightCardBackground,
+            color: isDark ? AppColors.darkCardBackground : AppColors.lightCardBackground,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -861,17 +895,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     Icon(
                       isDark ? Icons.light_mode : Icons.dark_mode,
                       size: 20,
-                      color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.lightTextPrimary,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                     ),
                     const SizedBox(width: 12),
                     Text(
                       isDark ? 'Light Mode' : 'Dark Mode',
                       style: TextStyle(
-                        color: isDark
-                            ? AppColors.darkTextPrimary
-                            : AppColors.lightTextPrimary,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                       ),
                     ),
                   ],
@@ -884,17 +914,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     Icon(
                       Icons.people_outline,
                       size: 20,
-                      color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.lightTextPrimary,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                     ),
                     const SizedBox(width: 12),
                     Text(
                       'Friends',
                       style: TextStyle(
-                        color: isDark
-                            ? AppColors.darkTextPrimary
-                            : AppColors.lightTextPrimary,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                       ),
                     ),
                   ],
@@ -907,17 +933,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     Icon(
                       Icons.block,
                       size: 20,
-                      color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.lightTextPrimary,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                     ),
                     const SizedBox(width: 12),
                     Text(
                       'Blocked List',
                       style: TextStyle(
-                        color: isDark
-                            ? AppColors.darkTextPrimary
-                            : AppColors.lightTextPrimary,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                       ),
                     ),
                   ],
@@ -951,7 +973,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBody(bool isDark) {
-    if (_isLoading && _isLoadingFriends) {
+    if (_isLoading && _isLoadingFriends && _isLoadingProfile) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -984,9 +1006,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   decoration: BoxDecoration(
                     border: Border(
                       right: BorderSide(
-                        color: isDark
-                            ? AppColors.darkDivider
-                            : AppColors.lightDivider,
+                        color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
                         width: 1,
                       ),
                     ),
@@ -1011,6 +1031,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+// UserSearchDelegate class defined in the same file
 class UserSearchDelegate extends SearchDelegate<int?> {
   final UserService userService;
   final ProfilePictureService profilePictureService;
@@ -1062,17 +1083,13 @@ class UserSearchDelegate extends SearchDelegate<int?> {
             Icon(
               Icons.search,
               size: 64,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
             ),
             const SizedBox(height: 12),
             Text(
               'Type a name to search',
               style: TextStyle(
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
               ),
             ),
           ],
@@ -1094,9 +1111,7 @@ class UserSearchDelegate extends SearchDelegate<int?> {
                 'Search failed: ${snapshot.error}',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                 ),
               ),
             ),
@@ -1111,17 +1126,13 @@ class UserSearchDelegate extends SearchDelegate<int?> {
                 Icon(
                   Icons.person_search,
                   size: 64,
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   'No users found',
                   style: TextStyle(
-                    color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                   ),
                 ),
               ],
@@ -1149,14 +1160,12 @@ class UserSearchDelegate extends SearchDelegate<int?> {
                     backgroundImage: bytes != null ? MemoryImage(bytes) : null,
                     child: bytes == null
                         ? Text(
-                            user.name.isNotEmpty
-                                ? user.name[0].toUpperCase()
-                                : '?',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
+                      user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
                         : null,
                   );
                 },
@@ -1164,18 +1173,14 @@ class UserSearchDelegate extends SearchDelegate<int?> {
               title: Text(
                 user.name,
                 style: TextStyle(
-                  color: isDark
-                      ? AppColors.darkTextPrimary
-                      : AppColors.lightTextPrimary,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               subtitle: Text(
                 user.email,
                 style: TextStyle(
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                 ),
               ),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),

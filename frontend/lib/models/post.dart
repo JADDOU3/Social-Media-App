@@ -6,7 +6,8 @@ class Post {
   final List<String> imageUrls;
   final DateTime createdDate;
   final String? authorEmail;
-  final String? authorName;
+  final String authorName;
+
   final int? commentCount;
   final String? currentUserReaction;
   final Map<String, int>? reactionCounts;
@@ -17,7 +18,7 @@ class Post {
     required this.imageUrls,
     required this.createdDate,
     this.authorEmail,
-    this.authorName,
+   required this.authorName,
     this.commentCount,
     this.currentUserReaction,
     this.reactionCounts,

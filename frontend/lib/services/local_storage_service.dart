@@ -7,14 +7,11 @@ class LocalStorageService {
 
   static const String _token = "accessToken";
   static const String _themeMode = "isDarkMode";
-  static const String _expiryKey='auth_expiry';
+  static const String _expiryKey = 'auth_expiry';
+  static const String _userId = "user_id"; // ✅ Fixed: Consistent key
+  static const String _refreshToken = "refresh_token";
 
-  Future<void> saveTokens({
-    required String accessToken,
-  }) async {
-    await _secureStorage.write(key: _token, value: accessToken);
-  }
-
+  // Auth Token
   Future<void> saveAccessToken(String accessToken) async {
     await _secureStorage.write(key: _token, value: accessToken);
   }
@@ -23,16 +20,47 @@ class LocalStorageService {
     return await _secureStorage.read(key: _token);
   }
 
-  Future<void> clearTokens() async {
+  Future<void> clearAuth() async {
     await _secureStorage.delete(key: _token);
+    await _secureStorage.delete(key: _expiryKey);
+    await _secureStorage.delete(key: _refreshToken);
   }
 
+  // User ID
+  Future<void> saveUserId(String userId) async {
+    await _secureStorage.write(key: _userId, value: userId);
+  }
+
+  Future<String?> getUserId() async {
+    return await _secureStorage.read(key: _userId); // ✅ Fixed: Uses _userId
+  }
+
+  Future<void> clearUserId() async {
+    await _secureStorage.delete(key: _userId);
+  }
+
+  // Refresh Token
+  Future<void> saveRefreshToken(String refreshToken) async {
+    await _secureStorage.write(key: _refreshToken, value: refreshToken);
+  }
+
+  Future<String?> getRefreshToken() async {
+    return await _secureStorage.read(key: _refreshToken);
+  }
+
+  // Theme
   Future<void> saveThemeMode(bool isDarkMode) async {
     await _secureStorage.write(key: _themeMode, value: isDarkMode.toString());
   }
 
-  Future<void> saveExpiry(DateTime expiry)async{
-    await _secureStorage.write(key: _expiryKey,value: expiry.toIso8601String());
+  Future<bool?> getThemeMode() async {
+    final value = await _secureStorage.read(key: _themeMode);
+    return value == 'true';
+  }
+
+  // Expiry
+  Future<void> saveExpiry(DateTime expiry) async {
+    await _secureStorage.write(key: _expiryKey, value: expiry.toIso8601String());
   }
 
   Future<DateTime?> getExpiry() async {
@@ -45,29 +73,7 @@ class LocalStorageService {
     }
   }
 
-  Future<void> saveRefreshToken(String refreshToken) async {
-    await _secureStorage.write(key: 'refresh_token', value: refreshToken);
-  }
-
-  Future<String?> getRefreshToken() async {
-    return await _secureStorage.read(key: 'refresh_token');
-  }
-
-  Future<bool?> getThemeMode() async {
-    final value = await _secureStorage.read(key: _themeMode);
-    if (value == null) return null;
-    return value == 'true';
-  }
-
-  Future<void> clearAuth() async{
-    await _secureStorage.delete(key:_token);
-    await _secureStorage.delete(key:_expiryKey);
-  }
-
-  Future<void> clearThemeMode() async {
-    await _secureStorage.delete(key: _themeMode);
-  }
-
+  // Generic
   Future<void> saveData(String key, String value) async {
     await _secureStorage.write(key: key, value: value);
   }
