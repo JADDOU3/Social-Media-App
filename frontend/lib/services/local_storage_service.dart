@@ -1,4 +1,5 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class LocalStorageService {
   final FlutterSecureStorage _secureStorage;
@@ -8,10 +9,9 @@ class LocalStorageService {
   static const String _token = "accessToken";
   static const String _themeMode = "isDarkMode";
   static const String _expiryKey = 'auth_expiry';
-  static const String _userId = "user_id"; // ✅ Fixed: Consistent key
+  static const String _userId = "user_id";
   static const String _refreshToken = "refresh_token";
 
-  // Auth Token
   Future<void> saveAccessToken(String accessToken) async {
     await _secureStorage.write(key: _token, value: accessToken);
   }
@@ -24,22 +24,27 @@ class LocalStorageService {
     await _secureStorage.delete(key: _token);
     await _secureStorage.delete(key: _expiryKey);
     await _secureStorage.delete(key: _refreshToken);
+    await _secureStorage.delete(key: _userId);
   }
 
-  // User ID
+  Future<void> clearTokenAndExpiry() async {
+    await _secureStorage.delete(key: _token);
+    await _secureStorage.delete(key: _expiryKey);
+    await _secureStorage.delete(key: _refreshToken);
+  }
+
   Future<void> saveUserId(String userId) async {
     await _secureStorage.write(key: _userId, value: userId);
   }
 
   Future<String?> getUserId() async {
-    return await _secureStorage.read(key: _userId); // ✅ Fixed: Uses _userId
+    return await _secureStorage.read(key: _userId);
   }
 
   Future<void> clearUserId() async {
     await _secureStorage.delete(key: _userId);
   }
 
-  // Refresh Token
   Future<void> saveRefreshToken(String refreshToken) async {
     await _secureStorage.write(key: _refreshToken, value: refreshToken);
   }
@@ -48,7 +53,6 @@ class LocalStorageService {
     return await _secureStorage.read(key: _refreshToken);
   }
 
-  // Theme
   Future<void> saveThemeMode(bool isDarkMode) async {
     await _secureStorage.write(key: _themeMode, value: isDarkMode.toString());
   }
@@ -58,7 +62,6 @@ class LocalStorageService {
     return value == 'true';
   }
 
-  // Expiry
   Future<void> saveExpiry(DateTime expiry) async {
     await _secureStorage.write(key: _expiryKey, value: expiry.toIso8601String());
   }
@@ -73,7 +76,6 @@ class LocalStorageService {
     }
   }
 
-  // Generic
   Future<void> saveData(String key, String value) async {
     await _secureStorage.write(key: key, value: value);
   }
@@ -89,4 +91,18 @@ class LocalStorageService {
   Future<void> clearAll() async {
     await _secureStorage.deleteAll();
   }
+
+  String? extractUserEmailFromToken(String token) {
+    try {
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      print("decodedToken $decodedToken");
+
+      return decodedToken['sub'];
+    } catch (e) {
+      print('Failed to decode token: $e');
+      return null;
+    }
+  }
+
+
 }

@@ -42,7 +42,7 @@ class _CheckAuthScreenState extends State<CheckAuthScreen> {
       }
     }
 
-    await _localStorage.clearAuth();
+    await _localStorage.clearTokenAndExpiry();
     context.go('/login');
   }
 

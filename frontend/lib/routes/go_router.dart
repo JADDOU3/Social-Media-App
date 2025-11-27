@@ -39,17 +39,14 @@ final GoRouter router = GoRouter(
       path: AppRoutes.checkAuth,
       builder: (context, state) => const CheckAuthScreen(),
     ),
-
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
     ),
-
     GoRoute(
       path: '/signup',
       builder: (context, state) => const SignUpScreen(),
     ),
-
     GoRoute(
       path: AppRoutes.home,
       builder: (context, state) => HomeScreen(
@@ -62,7 +59,6 @@ final GoRouter router = GoRouter(
         authService: authService,
       ),
     ),
-
     GoRoute(
       path: AppRoutes.profile,
       builder: (context, state) => ProfileScreen(
@@ -73,7 +69,6 @@ final GoRouter router = GoRouter(
         friendService: friendService,
       ),
     ),
-
     GoRoute(
       path: '${AppRoutes.profile}/:userId',
       builder: (context, state) {
@@ -90,7 +85,6 @@ final GoRouter router = GoRouter(
         );
       },
     ),
-
     GoRoute(
       path: AppRoutes.friends,
       builder: (context, state) => FriendsScreen(
@@ -99,7 +93,6 @@ final GoRouter router = GoRouter(
         profilePictureService: profilePictureService,
       ),
     ),
-
     GoRoute(
       path: AppRoutes.blocked,
       builder: (context, state) => BlockedUsersScreen(

@@ -67,4 +67,19 @@ public class ProfilePictureController {
             throw new RuntimeException(e);
         }
     }
+
+    @GetMapping("by-email/{userEmail}")
+    public ResponseEntity<byte[]> getUserProfilePictureFromEmail(@PathVariable String userEmail) {
+        User user = userService.findByEmail(userEmail);
+        if (user == null) return ResponseEntity.notFound().build();
+        try {
+            return profilePictureService.getProfilePicture(user.getEmail())
+                    .map(picture -> ResponseEntity.ok()
+                            .contentType(MediaType.valueOf(picture.getPictureType()))
+                            .body(picture.getImageData()))
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

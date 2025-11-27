@@ -1,7 +1,7 @@
-import 'package:jwt_decoder/jwt_decoder.dart'; // ✅ REQUIRED PACKAGE
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'api_service.dart';
 import 'local_storage_service.dart';
-import '../models/user_profile.dart'; // ✅ FIX for UserProfile errors
+import '../models/user_profile.dart';
 
 class AuthService {
   final ApiService _apiService;
@@ -24,7 +24,6 @@ class AuthService {
       final token = response['access_token'];
       await _localStorage.saveAccessToken(token);
 
-      // Extract userId from token
       final userId = extractUserIdFromToken(token);
       if (userId != null) {
         await _localStorage.saveUserId(userId.toString());
@@ -51,13 +50,11 @@ class AuthService {
   }
 
   Future<int?> getCurrentUserId() async {
-    // Try storage first
     final storedId = await _localStorage.getUserId();
     if (storedId != null) {
       return int.tryParse(storedId);
     }
 
-    // Fallback: extract from token
     final token = await _localStorage.getAccessToken();
     if (token != null) {
       return extractUserIdFromToken(token);
@@ -117,7 +114,6 @@ class AuthService {
       print('Logout API call failed: $e');
     } finally {
       await _localStorage.clearAuth();
-      await _localStorage.clearUserId();
     }
   }
 }

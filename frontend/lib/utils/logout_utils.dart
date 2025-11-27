@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
-import '../services/api_service.dart';
-import '../services/local_storage_service.dart';
-import '../utils/snackbar_utils.dart';
 
 Future<void> performLogout(BuildContext context) async {
   showDialog(
@@ -16,20 +13,14 @@ Future<void> performLogout(BuildContext context) async {
   );
 
   try {
-    final apiService = context.read<ApiService>();
-    final localStorage = context.read<LocalStorageService>();
-    final authService = AuthService(apiService, localStorage);
-
+    final authService = context.read<AuthService>();
     await authService.logout();
-
-    Navigator.of(context).pop();
-
+    await Future.delayed(const Duration(milliseconds: 200));
+    Navigator.of(context, rootNavigator: true).pop();
     context.go('/login');
-
-    showSuccessSnackbar(context, "Logged out successfully");
   } catch (e) {
-    Navigator.of(context).pop();
-    showErrorSnackbar(context, "Logout failed. Please try again.");
+    Navigator.of(context, rootNavigator: true).pop();
+    print('Logout error: $e');
     context.go('/login');
   }
 }

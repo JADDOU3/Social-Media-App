@@ -1,6 +1,11 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:frontend/models/user_profile.dart';
+import 'package:frontend/routes/go_router.dart';
+import 'package:frontend/services/api_service.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/post_service.dart';
@@ -73,12 +78,36 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  int? extractUserIdFromToken(String token) {
+    try {
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      print("decodedToken $decodedToken");
+
+      return decodedToken['userId'];
+    } catch (e) {
+      print('Failed to decode token: $e');
+      return null;
+    }
+  }
+
+
   Future<void> _loadUserIdFromToken() async {
     try {
-      final userId = await widget.authService.getCurrentUserId();
-      if (userId != null && mounted) {
+      const secureStorage = FlutterSecureStorage();
+      final localStorage = LocalStorageService(secureStorage);
+
+      final token = await localStorage.getAccessToken();
+      print("token $token");
+      final email = localStorage.extractUserEmailFromToken(token!);
+      print("email $email");
+
+      final UserProfile user = await UserService(ApiService(localStorage)).getUserByEmail(email!);
+      print("user $user");
+
+      // final userId = await widget.authService.getCurrentUserId();
+      if (user.id != null && mounted) {
         setState(() {
-          _currentUserId = userId;
+          _currentUserId = user.id;
         });
       }
     } catch (e) {

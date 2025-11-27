@@ -119,6 +119,12 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    @GetMapping("by-email/{email}")
+    public ResponseEntity<User> findUsersByEmail(@PathVariable String email) {
+        User users = userService.findByEmail(email);
+        return ResponseEntity.ok(users);
+    }
+
     @GetMapping("/profile/{userId}")
     public ResponseEntity<ProfileResponse> getUserProfile(@PathVariable int userId) {
         User user = userService.findById(userId);

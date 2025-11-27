@@ -59,6 +59,15 @@
       }
     }
 
+    Future<UserProfile> getUserByEmail(String email) async {
+      try {
+        final response = await _apiService.get('users/by-email/$email');
+        return UserProfile.fromJson(response);
+      } catch (e) {
+        throw Exception('Failed to load user profile: $e');
+      }
+    }
+
     Future<UserProfile> getUserProfile(int userId) async {
       try {
         final response = await _apiService.get('users/profile/$userId');
