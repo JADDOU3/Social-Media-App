@@ -306,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSuggestedFriendsSection(bool isDark, {required bool isMobile}) {
     if (_isLoadingFriends) {
       return const Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(10.0),
         child: Center(child: CircularProgressIndicator()),
       );
     }
@@ -345,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         if (isMobile)
           SizedBox(
-            height: 140,
+            height: 180,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -359,13 +359,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                   },
                   child: Container(
-                    width: 100,
-                    margin: const EdgeInsets.only(right: 8),
+                    width: 110,
+                    margin: const EdgeInsets.only(right: 12),
                     child: Card(
                       margin: EdgeInsets.zero,
                       elevation: 2,
                       child: Padding(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(8),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
@@ -373,9 +373,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             _buildAvatar(
                               suggestion.id,
                               suggestion.name,
-                              radius: 24,
+                              radius: 28,
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 8),
                             Text(
                               suggestion.name,
                               style: TextStyle(
@@ -383,7 +383,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: isDark
                                     ? AppColors.darkTextPrimary
                                     : AppColors.lightTextPrimary,
-                                fontSize: 10,
+                                fontSize: 12,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -395,16 +395,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: isDark
                                     ? AppColors.darkTextSecondary
                                     : AppColors.lightTextSecondary,
-                                fontSize: 8,
+                                fontSize: 10,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 4),
                             IconButton(
                               icon: const Icon(
                                 Icons.add_circle_outline,
-                                size: 30,
+                                size: 32,
                               ),
                               color: AppColors.primary,
                               onPressed: () =>
@@ -412,8 +412,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               tooltip: 'Send friend request',
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(
-                                minWidth: 28,
-                                minHeight: 28,
+                                minWidth: 32,
+                                minHeight: 32,
                               ),
                             ),
                           ],
@@ -458,7 +458,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildFriendsSection(bool isDark, {required bool isMobile}) {
     if (_isLoadingFriends) {
       return const Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(10.0),
         child: Center(child: CircularProgressIndicator()),
       );
     }
@@ -471,7 +471,7 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
           child: Row(
             children: [
               Icon(
@@ -497,10 +497,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         if (isMobile)
           SizedBox(
-            height: 95,
+            height: 130,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
               itemCount: _friends.length,
               itemBuilder: (context, index) {
                 final friend = _friends[index];
@@ -519,19 +519,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                   },
                   child: Container(
-                    width: 80,
-                    margin: const EdgeInsets.only(right: 8),
+                    width: 90,
+                    margin: const EdgeInsets.only(right: 12),
                     child: Card(
                       margin: EdgeInsets.zero,
                       elevation: 2,
                       child: Padding(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(10),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildAvatar(friendUserId, friendName, radius: 20),
-                            const SizedBox(height: 4),
+                            _buildAvatar(friendUserId, friendName, radius: 24),
+                            const SizedBox(height: 8),
                             Text(
                               friendName,
                               style: TextStyle(
@@ -539,7 +539,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: isDark
                                     ? AppColors.darkTextPrimary
                                     : AppColors.lightTextPrimary,
-                                fontSize: 9,
+                                fontSize: 11,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -556,7 +556,7 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         else if (_friends.isEmpty)
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(10.0),
             child: Center(
               child: Text(
                 'No friends yet',
@@ -962,13 +962,14 @@ class _HomeScreenState extends State<HomeScreen> {
         if (isMobile) {
           return SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(top: 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildSuggestedFriendsSection(isDark, isMobile: true),
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
                 _buildFriendsSection(isDark, isMobile: true),
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
                 _buildPostsSection(isDark),
               ],
             ),
