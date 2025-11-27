@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:frontend/models/user_profile.dart';
 import 'package:frontend/routes/go_router.dart';
 import 'package:frontend/services/api_service.dart';
@@ -865,6 +866,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 15.0 , bottom: 5 , top: 5),
+          child: SvgPicture.asset(
+            'assets/vibley_logo.svg',
+            width: 70,
+            height: 70,
+          ),
+        ),
         title: const Text('Home'),
         centerTitle: true,
         actions: [

@@ -1,0 +1,16 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="200" height="200" fill="#AF92D7FF" rx="45"/>
+  
+  <!-- Simple letter C made clean and modern -->
+  <path d="M 130 60 
+           A 50 50 0 0 0 50 100
+           A 50 50 0 0 0 130 140"
+        fill="none"
+        stroke="#FFFFFF"
+        stroke-width="18"
+        stroke-linecap="round"/>
+  
+  <!-- Small dot accent -->
+  <circle cx="135" cy="100" r="7" fill="#FFFFFF"/>
+</svg>

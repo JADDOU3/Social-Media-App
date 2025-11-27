@@ -11,7 +11,7 @@ class ApiService {
   final LocalStorageService _localStorageService;
 
   // Use HTTP to match your Spring Boot configuration
-  static const String _baseUrl = 'http://localhost:8080/api/';
+  static const String _baseUrl = 'http://10.10.30.113:8080/api/';
 
   static String getBaseUrl() => _baseUrl;
 
